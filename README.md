@@ -1,4 +1,8 @@
 # Pars
+[![CircleCI](https://circleci.com/gh/ktnyt/pars.svg?style=svg)](https://circleci.com/gh/ktnyt/pars)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ktnyt/pars)](https://goreportcard.com/report/github.com/ktnyt/pars)
+[![GoDoc](http://godoc.org/github.com/ktnyt/pars?status.svg)](http://godoc.org/github.com/ktnyt/pars)
+
 Parser combinator library for Go.
 
 Pars provides parser combinator functionalites for parsing the contents of any
