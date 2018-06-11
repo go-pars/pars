@@ -221,3 +221,21 @@ func Phrase(q ...ParserLike) Parser {
 		return nil
 	}
 }
+
+// Until matches until a given parser matches.
+func Until(q ParserLike) Parser {
+	p := AsParser(q)
+	return func(state *State, result *Result) error {
+		ret := make([]byte, 0, 5)
+		state.Mark()
+		for p(state, result) != nil {
+			state.Jump()
+			ret = append(ret, state.Buffer[state.Index])
+			state.Advance(1)
+			state.Mark()
+		}
+		state.Jump()
+		result.Value = ret
+		return nil
+	}
+}

@@ -99,3 +99,32 @@ func BenchmarkPhrase(b *testing.B) {
 		p(s, pars.VoidResult)
 	}
 }
+
+func TestUntil(t *testing.T) {
+	p := pars.Until('🍺')
+
+	t.Run("matches until", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader("🍣🍖🍺"))
+		r := pars.Result{}
+		err := p(s, &r)
+		s.Clear()
+		require.NoError(t, err)
+		require.Equal(t, []byte("🍣🍖"), r.Value)
+		require.Equal(t, []byte("🍺"), s.Buffer)
+	})
+
+	t.Run("returns no error", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader("🍺🍺🍺"))
+		err := p(s, pars.VoidResult)
+		require.NoError(t, err)
+	})
+}
+
+func BenchmarkUntil(b *testing.B) {
+	p := pars.Dry(pars.Until('🍺'))
+	s := pars.NewState(strings.NewReader("🍣🍖🍺"))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
