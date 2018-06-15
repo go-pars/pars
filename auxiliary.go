@@ -230,6 +230,9 @@ func Until(q ParserLike) Parser {
 		state.Mark()
 		for p(state, result) != nil {
 			state.Jump()
+			if err := state.Want(1); err != nil {
+				return err
+			}
 			ret = append(ret, state.Buffer[state.Index])
 			state.Advance(1)
 			state.Mark()
