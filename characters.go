@@ -51,3 +51,10 @@ var Esc = Any(
 	FormFeed,
 	VerticalTab,
 )
+
+// EscByte matches an escape sequence for a given byte.
+func EscByte(q byte) Parser {
+	return ByteSlice([]byte{'\\', q}).Map(func(result *Result) {
+		result.Value = q
+	})
+}

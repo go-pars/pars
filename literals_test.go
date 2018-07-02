@@ -1,6 +1,7 @@
 package pars_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -23,6 +24,28 @@ func TestQuoted(t *testing.T) {
 
 func BenchmarkQuoted(b *testing.B) {
 	p := pars.Dry(pars.Quoted('"'))
+	s := pars.NewState(strings.NewReader(`"some \"string\""`))
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
+func TestStringLiteral(t *testing.T) {
+	r := pars.Result{}
+
+	t.Run("matches string literal", func(t *testing.T) {
+		e := `"some \"string\""`
+		s := pars.NewState(strings.NewReader(`"some \"string\""`))
+		err := pars.StringLiteral('"')(s, &r)
+		fmt.Println(r.Value.(string))
+		require.NoError(t, err)
+		require.IsType(t, e, r.Value)
+		require.Equal(t, e, r.Value)
+	})
+}
+
+func BenchmarkStringLiteral(b *testing.B) {
+	p := pars.Dry(pars.StringLiteral('"'))
 	s := pars.NewState(strings.NewReader(`"some \"string\""`))
 	for i := 0; i < b.N; i++ {
 		p(s, pars.VoidResult)

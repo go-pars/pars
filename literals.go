@@ -191,16 +191,61 @@ func number(state *State, result *Result) error {
 	return nil
 }
 
-// Quoted matches a quoted string for the given quotes.
+// Quoted matches a quoted string for the given quotes and return its contents.
 // Quoted will not close if a quote is preceded by a backslash.
 func Quoted(q byte) Parser {
-	return Seq(q, Cut, Many(Any(Esc, Not(q))), q).Map(func(result *Result) {
-		c := result.Children[2].Children
-		p := make([]byte, len(c))
-		for i := range c {
-			p[i] = c[i].Value.(byte)
+	body := Many(Any(EscByte(q), Not(q))).Map(func(result *Result) {
+		p := make([]byte, len(result.Children))
+		for i := range result.Children {
+			p[i] = result.Children[i].Value.(byte)
 		}
 		result.Value = string(p)
 		result.Children = nil
 	})
+	return Seq(q, Cut, body, q).Map(func(result *Result) {
+		result.Value = result.Children[2].Value
+		result.Children = nil
+	})
+}
+
+// StringLiteral matches a string literal for the given quotes and return the
+// literal. StringLiteral will not close if a quote is preceded by a backslash.
+func StringLiteral(q byte) Parser {
+	return func(state *State, result *Result) error {
+		if err := state.Want(1); err != nil {
+			return err
+		}
+		if state.Buffer[state.Index] != q {
+			return NewMismatchError("StringLiteral", []byte{q}, state.Position)
+		}
+
+		p := []byte{q}
+
+		state.Advance(1)
+		state.Clear()
+
+		for {
+			if err := state.Want(1); err != nil {
+				return err
+			}
+
+			c := state.Buffer[state.Index]
+			p = append(p, c)
+
+			if c == q {
+				result.Value = string(p)
+				return nil
+			}
+
+			if c == '\\' {
+				if err := state.Want(1); err != nil {
+					return err
+				}
+				state.Advance(1)
+				p = append(p, state.Buffer[state.Index])
+			}
+
+			state.Advance(1)
+		}
+	}
 }
