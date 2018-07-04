@@ -22,8 +22,6 @@ var (
 	Space  = Bytes(whitespace...)
 )
 
-var escapable = []byte{'\'', '"', '\\', 'n', 'r', 't', 'b', 'f', 'v'}
-
 // Escape sequences (JavaScript based)
 var (
 	SingleQuote    = ByteSlice([]byte{'\\', '\''}).Bind(byte('\''))
