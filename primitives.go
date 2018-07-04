@@ -23,6 +23,11 @@ func Epsilon(state *State, result *Result) error {
 	return nil
 }
 
+// Fail will always fail.
+func Fail(state *State, result *Result) error {
+	return NewParserError("must fail", state.Position)
+}
+
 // Cut the state at current position.
 func Cut(state *State, result *Result) error {
 	state.Clear()

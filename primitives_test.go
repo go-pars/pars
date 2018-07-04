@@ -32,6 +32,21 @@ func BenchmarkDryEpsilon(b *testing.B) {
 	}
 }
 
+func TestFail(t *testing.T) {
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	err := pars.Fail(s, pars.VoidResult)
+	require.Error(t, err)
+}
+
+func BenchmarkFail(b *testing.B) {
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	p := pars.Fail
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
 func TestHead(t *testing.T) {
 	t.Run("matches empty string", func(t *testing.T) {
 		s := pars.NewState(strings.NewReader(""))
