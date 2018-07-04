@@ -37,6 +37,14 @@ func Head(state *State, result *Result) error {
 	return nil
 }
 
+// Break matches if the state is looking at the head of the buffer.
+func Break(state *State, result *Result) error {
+	if state.Index != 0 {
+		return NewMismatchError("Break", []byte("Break"), state.Position)
+	}
+	return nil
+}
+
 // EOF matches if the io.Reader is at the end.
 func EOF(state *State, result *Result) error {
 	if err := state.Want(1); err != io.EOF {

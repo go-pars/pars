@@ -56,6 +56,38 @@ func BenchmarkHead(b *testing.B) {
 	}
 }
 
+func TestBreak(t *testing.T) {
+	t.Run("matches empty string", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader(""))
+		err := pars.Break(s, pars.VoidResult)
+		require.NoError(t, err)
+	})
+
+	t.Run("matches cut state", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader("Hello world!"))
+		s.Advance(1)
+		s.Clear()
+		err := pars.Break(s, pars.VoidResult)
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader("Hello world!"))
+		s.Advance(1)
+		err := pars.Break(s, pars.VoidResult)
+		require.Error(t, err)
+	})
+}
+
+func BenchmarkBreak(b *testing.B) {
+	s := pars.NewState(strings.NewReader(""))
+	p := pars.Dry(pars.Break)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
 func TestEOF(t *testing.T) {
 	t.Run("matches empty string", func(t *testing.T) {
 		s := pars.NewState(strings.NewReader(""))
