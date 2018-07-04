@@ -8,9 +8,9 @@ import (
 // Map is a function signature for a result mapper.
 type Map func(result *Result)
 
-// GetChild will attempt to set the child value for the given index as the
+// Child will attempt to set the child value for the given index as the
 // root value.
-func GetChild(i int) Map {
+func Child(i int) Map {
 	return func(result *Result) {
 		result.Value = result.Children[i].Value
 		result.Children = nil
