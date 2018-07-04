@@ -190,6 +190,16 @@ func ByteSlice(p []byte) Parser {
 	}
 }
 
+// WildByte matches any byte.
+func WildByte(state *State, result *Result) error {
+	if err := state.Want(1); err != nil {
+		return err
+	}
+	result.Value = state.Buffer[state.Index]
+	state.Advance()
+	return nil
+}
+
 // Rune matches a given rune.
 func Rune(r rune) Parser {
 	n := utf8.RuneLen(r)
@@ -369,6 +379,9 @@ func RuneSlice(r []rune) Parser {
 		return nil
 	}
 }
+
+// WildRune matches any rune except RuneError.
+var WildRune = NotRune(utf8.RuneError)
 
 // String matches a given string.
 func String(s string) Parser {

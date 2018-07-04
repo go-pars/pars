@@ -352,6 +352,26 @@ func BenchmarkByteSlice(b *testing.B) {
 	}
 }
 
+func TestWildByte(t *testing.T) {
+	e := []byte("Hello world!")
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	r := pars.Result{}
+	for i := range e {
+		err := pars.WildByte(s, &r)
+		require.NoError(t, err)
+		require.Equal(t, e[i], r.Value)
+	}
+}
+
+func BenchmarkWildByte(b *testing.B) {
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	p := pars.Dry(pars.WildByte)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
 func TestRune(t *testing.T) {
 	t.Run("matches rune", func(t *testing.T) {
 		e := '🍺'
@@ -550,6 +570,26 @@ func TestRuneSlice(t *testing.T) {
 func BenchmarkRuneSlice(b *testing.B) {
 	s := pars.NewState(strings.NewReader("こんにちは🍣🍺"))
 	p := pars.Dry(pars.RuneSlice([]rune("こんにちは")))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
+func TestWildRune(t *testing.T) {
+	e := []rune("Hello world!")
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	r := pars.Result{}
+	for i := range e {
+		err := pars.WildRune(s, &r)
+		require.NoError(t, err)
+		require.Equal(t, e[i], r.Value)
+	}
+}
+
+func BenchmarkWildRune(b *testing.B) {
+	s := pars.NewState(strings.NewReader("Hello world!"))
+	p := pars.Dry(pars.WildRune)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		p(s, pars.VoidResult)
