@@ -196,7 +196,7 @@ func WildByte(state *State, result *Result) error {
 		return err
 	}
 	result.Value = state.Buffer[state.Index]
-	state.Advance()
+	state.Advance(1)
 	return nil
 }
 
@@ -225,7 +225,9 @@ func NotRune(r rune) Parser {
 	utf8.EncodeRune(p, r)
 	return func(state *State, result *Result) error {
 		if err := state.Want(n); err != nil {
-			return NewTraceError("NotRune", err)
+			if err := state.Want(1); err != nil {
+				return NewTraceError("NotRune", err)
+			}
 		}
 		if matchByteSlice(p, state.Buffer[state.Index:]) {
 			return NewNotMismatchError("NotRune", p, state.Position)
