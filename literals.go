@@ -4,10 +4,6 @@ func notZero(b byte) bool {
 	return '1' <= b && b <= '9'
 }
 
-func isDigit(b byte) bool {
-	return '0' <= b && b <= '9'
-}
-
 // Integer matches a sequence that can be converted to an integer value.
 // This is a highly verbose, optimized implementation.
 // Integer does NOT provide a mapping to convert to an integer type.
