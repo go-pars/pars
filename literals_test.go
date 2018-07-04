@@ -1,7 +1,6 @@
 package pars_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -37,7 +36,6 @@ func TestStringLiteral(t *testing.T) {
 		e := `"some \"string\""`
 		s := pars.NewState(strings.NewReader(`"some \"string\""`))
 		err := pars.StringLiteral('"')(s, &r)
-		fmt.Println(r.Value.(string))
 		require.NoError(t, err)
 		require.IsType(t, e, r.Value)
 		require.Equal(t, e, r.Value)

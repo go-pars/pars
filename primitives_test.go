@@ -32,6 +32,30 @@ func BenchmarkDryEpsilon(b *testing.B) {
 	}
 }
 
+func TestHead(t *testing.T) {
+	t.Run("matches empty string", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader(""))
+		err := pars.Head(s, pars.VoidResult)
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error", func(t *testing.T) {
+		s := pars.NewState(strings.NewReader("Hello world!"))
+		s.Advance(1)
+		err := pars.Head(s, pars.VoidResult)
+		require.Error(t, err)
+	})
+}
+
+func BenchmarkHead(b *testing.B) {
+	s := pars.NewState(strings.NewReader(""))
+	p := pars.Dry(pars.Head)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p(s, pars.VoidResult)
+	}
+}
+
 func TestEOF(t *testing.T) {
 	t.Run("matches empty string", func(t *testing.T) {
 		s := pars.NewState(strings.NewReader(""))

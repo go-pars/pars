@@ -29,6 +29,14 @@ func Cut(state *State, result *Result) error {
 	return nil
 }
 
+// Head matches if the state is at the beginning.
+func Head(state *State, result *Result) error {
+	if state.Position != 0 {
+		return NewMismatchError("Head", []byte("Head"), state.Position)
+	}
+	return nil
+}
+
 // EOF matches if the io.Reader is at the end.
 func EOF(state *State, result *Result) error {
 	if err := state.Want(1); err != io.EOF {
