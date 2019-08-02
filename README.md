@@ -89,7 +89,7 @@ matcher which will return no error at the current position and continue on,
 the first `pars.Any` in the `pars.Seq` can be interpreted as a parser that will
 match either a `'+'`, `'-'`, or nothing. The `Exp` and `Frac` parsers also use
 the `pars.Seq` combinators to match accordingly. The `pars.Try` combinator is
-equivalent to `pars.Any(parserm pars.Epsilon)` (literally, this definition is
+equivalent to `pars.Any(parser, pars.Epsilon)` (literally, this definition is
 used to define `pars.Try`) which will try to match the parser but will simply
 ignore it if it does not match.
 
