@@ -2,6 +2,7 @@ package pars
 
 import (
 	"io"
+	"strings"
 )
 
 const (
@@ -60,6 +61,11 @@ func NewState(r io.Reader) *State {
 		}
 	}
 	return s
+}
+
+// FromString returns a new State for given string.
+func FromString(s string) *State {
+	return NewState(strings.NewReader(s))
 }
 
 func (s *State) fill() error {
