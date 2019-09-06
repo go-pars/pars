@@ -81,6 +81,15 @@ func Flatten(result *Result) {
 	}
 }
 
+// Atoi will convert the result value string to an integer.
+func Atoi(result *Result) {
+	n, err := strconv.Atoi(result.Value.(string))
+	if err != nil {
+		panic(err)
+	}
+	result.Value = n
+}
+
 // ParseInt will convert the result value string to an integer type.
 func ParseInt(base, bitSize int) Map {
 	return func(result *Result) {
