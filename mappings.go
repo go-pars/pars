@@ -2,6 +2,7 @@ package pars
 
 import (
 	"strconv"
+	"time"
 	"unicode/utf8"
 )
 
@@ -78,6 +79,17 @@ func flatten(children []Result) []Result {
 func Flatten(result *Result) {
 	if result.Children != nil {
 		result.Children = flatten(result.Children)
+	}
+}
+
+// Time will convert the result value string to a time.
+func Time(layout string) Map {
+	return func(result *Result) {
+		t, err := time.Parse(layout, result.Value.(string))
+		if err != nil {
+			panic(err)
+		}
+		result.Value = t
 	}
 }
 
