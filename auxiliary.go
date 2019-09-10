@@ -238,7 +238,7 @@ func Until(q ParserLike) Parser {
 			state.Mark()
 		}
 		state.Jump()
-		result.Value = ret
+		result.Value = string(ret)
 		return nil
 	}
 }
