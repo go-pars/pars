@@ -136,7 +136,7 @@ func ByteRange(begin, end byte) Parser {
 			return NewTraceError("ByteRange", err)
 		}
 		b := state.Buffer[state.Index]
-		if b <= begin || end <= b {
+		if b < begin || end < b {
 			return NewMismatchError("ByteRange", expected, state.Position)
 		}
 		result.Value = b
