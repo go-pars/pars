@@ -162,7 +162,7 @@ func genericSepImpl(p, s Parser) Parser {
 	}
 }
 
-// Sep matches a sequences separated by another parser white whitespace in
+// Sep matches a sequences separated by another parser with a whitespace in
 // between. It will try to use one of the specialized parsers for a known
 // separater type.
 func Sep(q, s ParserLike) Parser {
