@@ -15,8 +15,7 @@ func (p Parser) Map(f Map) Parser {
 		if err := p(state, result); err != nil {
 			return err
 		}
-		f(result)
-		return nil
+		return f(result)
 	}
 }
 

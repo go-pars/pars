@@ -190,17 +190,19 @@ func number(state *State, result *Result) error {
 // Quoted matches a quoted string for the given quotes and return its contents.
 // Quoted will not close if a quote is preceded by a backslash.
 func Quoted(q byte) Parser {
-	body := Many(Any(EscByte(q), Not(q))).Map(func(result *Result) {
+	body := Many(Any(EscByte(q), Not(q))).Map(func(result *Result) error {
 		p := make([]byte, len(result.Children))
 		for i := range result.Children {
 			p[i] = result.Children[i].Value.(byte)
 		}
 		result.Value = string(p)
 		result.Children = nil
+		return nil
 	})
-	return Seq(q, Cut, body, q).Map(func(result *Result) {
+	return Seq(q, Cut, body, q).Map(func(result *Result) error {
 		result.Value = result.Children[2].Value
 		result.Children = nil
+		return nil
 	})
 }
 

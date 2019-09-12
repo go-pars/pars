@@ -7,21 +7,22 @@ import (
 )
 
 // Map is a function signature for a result mapper.
-type Map func(result *Result)
+type Map func(result *Result) error
 
 // Child will attempt to set the child value for the given index as the
 // root value.
 func Child(i int) Map {
-	return func(result *Result) {
+	return func(result *Result) error {
 		result.Value = result.Children[i].Value
 		result.Children = nil
+		return nil
 	}
 }
 
 // CatByte will concatenate all children values of type byte into a string.
 // This should be faster compared to the generic Cat which will check for all
 // types that can be converted to bytes and grows the result slice dynamically.
-func CatByte(result *Result) {
+func CatByte(result *Result) error {
 	if result.Children != nil {
 		p := make([]byte, len(result.Children))
 		for i := range result.Children {
@@ -30,10 +31,11 @@ func CatByte(result *Result) {
 		result.Value = string(p)
 		result.Children = nil
 	}
+	return nil
 }
 
 // Cat will concatenate all children values into a string.
-func Cat(result *Result) {
+func Cat(result *Result) error {
 	if result.Children != nil {
 		p := make([]byte, 0, len(result.Children))
 		for i := range result.Children {
@@ -60,6 +62,7 @@ func Cat(result *Result) {
 		result.Value = string(p)
 		result.Children = nil
 	}
+	return nil
 }
 
 func flatten(children []Result) []Result {
@@ -76,50 +79,55 @@ func flatten(children []Result) []Result {
 }
 
 // Flatten will flatten nested children into the root children slice.
-func Flatten(result *Result) {
+func Flatten(result *Result) error {
 	if result.Children != nil {
 		result.Children = flatten(result.Children)
 	}
+	return nil
 }
 
 // Time will convert the result value string to a time.
 func Time(layout string) Map {
-	return func(result *Result) {
+	return func(result *Result) error {
 		t, err := time.Parse(layout, result.Value.(string))
 		if err != nil {
-			panic(err)
+			return err
 		}
 		result.Value = t
+		return nil
 	}
 }
 
 // Atoi will convert the result value string to an integer.
-func Atoi(result *Result) {
+func Atoi(result *Result) error {
 	n, err := strconv.Atoi(result.Value.(string))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	result.Value = n
+	return nil
 }
 
 // ParseInt will convert the result value string to an integer type.
 func ParseInt(base, bitSize int) Map {
-	return func(result *Result) {
+	return func(result *Result) error {
 		n, err := strconv.ParseInt(result.Value.(string), base, bitSize)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		result.Value = n
+		return nil
 	}
 }
 
 // ParseFloat will convert the result value string to a float type.
 func ParseFloat(bitSize int) Map {
-	return func(result *Result) {
+	return func(result *Result) error {
 		n, err := strconv.ParseFloat(result.Value.(string), bitSize)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		result.Value = n
+		return nil
 	}
 }

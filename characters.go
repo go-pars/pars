@@ -88,7 +88,8 @@ var Esc = Any(
 
 // EscByte matches an escape sequence for a given byte.
 func EscByte(q byte) Parser {
-	return ByteSlice([]byte{'\\', q}).Map(func(result *Result) {
+	return ByteSlice([]byte{'\\', q}).Map(func(result *Result) error {
 		result.Value = q
+		return nil
 	})
 }

@@ -87,3 +87,20 @@ func Many(q ParserLike, args ...int) Parser {
 		}
 	}
 }
+
+// Count attempts to match the given parser a given number of times.
+func Count(q ParserLike, count int) Parser {
+	p := AsParser(q)
+	return func(state *State, result *Result) error {
+		result.Children = make([]Result, count)
+		state.Mark()
+		for i := 0; i < count; i++ {
+			if err := p(state, &result.Children[i]); err != nil {
+				state.Jump()
+				return NewTraceError("Many", err)
+			}
+		}
+		state.Unmark()
+		return nil
+	}
+}

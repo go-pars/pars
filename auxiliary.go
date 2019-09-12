@@ -162,7 +162,7 @@ func genericSepImpl(p, s Parser) Parser {
 	}
 }
 
-// Sep matches a sequences separated by another parser with a whitespace in
+// Sep matches a sequence separated by another parser with a whitespace in
 // between. It will try to use one of the specialized parsers for a known
 // separater type.
 func Sep(q, s ParserLike) Parser {
@@ -239,6 +239,18 @@ func Until(q ParserLike) Parser {
 		}
 		state.Jump()
 		result.Value = string(ret)
+		return nil
+	}
+}
+
+// Split matches a sequence of strings delimited by the given parser.
+func Split(q ParserLike) Parser {
+	p := Until(q)
+	return func(state *State, result *Result) error {
+		result.Children = make([]Result, 1, 5)
+		for p(state, &result.Children[len(result.Children)-1]) == nil {
+			result.Children = append(result.Children, Result{})
+		}
 		return nil
 	}
 }
