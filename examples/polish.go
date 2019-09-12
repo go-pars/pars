@@ -1,8 +1,12 @@
 package examples
 
-import "github.com/ktnyt/pars"
+import (
+	"errors"
 
-func evaluate(result *pars.Result) {
+	"github.com/ktnyt/pars"
+)
+
+func evaluate(result *pars.Result) error {
 	op := result.Children[0].Value.(byte)
 	a := result.Children[1].Value.(float64)
 	b := result.Children[2].Value.(float64)
@@ -16,9 +20,10 @@ func evaluate(result *pars.Result) {
 	case '/':
 		result.Value = a / b
 	default:
-		panic("operator matched a wrong byte")
+		return errors.New("operator matched a wrong byte")
 	}
 	result.Children = nil
+	return nil
 }
 
 // Expression is a placeholder.

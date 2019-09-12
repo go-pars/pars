@@ -14,7 +14,7 @@ var (
 	False  = pars.String("false").Bind(false)
 	String = pars.Quoted('"')
 	Number = pars.Number.Map(pars.ParseFloat(64))
-	Array  = pars.Phrase('[', pars.Cut, pars.Sep(&Value, ','), ']').Map(func(result *pars.Result) {
+	Array  = pars.Phrase('[', pars.Cut, pars.Sep(&Value, ','), ']').Map(func(result *pars.Result) error {
 		c := result.Children[2].Children
 		v := make([]interface{}, len(c))
 		for i := range c {
@@ -22,8 +22,9 @@ var (
 		}
 		result.Value = v
 		result.Children = nil
+		return nil
 	})
-	Object = pars.Phrase('{', pars.Cut, pars.Sep(pars.Phrase(String, ":", &Value), ','), '}').Map(func(result *pars.Result) {
+	Object = pars.Phrase('{', pars.Cut, pars.Sep(pars.Phrase(String, ":", &Value), ','), '}').Map(func(result *pars.Result) error {
 		c := result.Children[2].Children
 		v := make(map[string]interface{})
 		for i := range c {
@@ -31,6 +32,7 @@ var (
 		}
 		result.Value = v
 		result.Children = nil
+		return nil
 	})
 )
 
