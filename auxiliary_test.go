@@ -109,7 +109,7 @@ func TestUntil(t *testing.T) {
 		err := p(s, &r)
 		s.Clear()
 		require.NoError(t, err)
-		require.Equal(t, []byte("🍣🍖"), r.Value)
+		require.Equal(t, "🍣🍖", r.Value)
 		require.Equal(t, []byte("🍺"), s.Buffer)
 	})
 
