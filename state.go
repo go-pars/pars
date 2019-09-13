@@ -147,6 +147,6 @@ func (s *State) Clear() {
 }
 
 // EOF returns true if the state reached the end of the reader.
-func (s *State) EOF() {
+func (s *State) EOF() bool {
 	return s.isEOF
 }
