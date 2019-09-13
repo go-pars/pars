@@ -145,3 +145,8 @@ func (s *State) Clear() {
 		s.marks.Clear()
 	}
 }
+
+// EOF returns true if the state reached the end of the reader.
+func (s *State) EOF() {
+	return s.isEOF
+}
