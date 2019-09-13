@@ -71,13 +71,13 @@ func Many(q ParserLike, args ...int) Parser {
 		c = min
 	}
 	return func(state *State, result *Result) error {
-		result.Children = make([]Result, min, c)
+		result.Children = make([]Result, 0, c)
 		for {
 			state.Mark()
 			result.Children = append(result.Children, Result{})
 			if err := p(state, &result.Children[len(result.Children)-1]); err != nil {
 				state.Jump()
-				if len(result.Children) > min {
+				if len(result.Children) >= min {
 					result.Children = result.Children[:len(result.Children)-1]
 					return nil
 				}
