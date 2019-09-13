@@ -70,8 +70,9 @@ func AsParsers(q ...ParserLike) []Parser {
 }
 
 // Apply a parser to a State.
-func Apply(p Parser, s *State) (interface{}, error) {
+func Apply(q ParserLike, s *State) (interface{}, error) {
 	r := Result{}
+	p := AsParser(q)
 	if err := p(s, &r); err != nil && err != io.EOF {
 		return nil, err
 	}
