@@ -76,5 +76,11 @@ func Apply(q ParserLike, s *State) (interface{}, error) {
 	if err := p(s, &r); err != nil && err != io.EOF {
 		return nil, err
 	}
-	return r.Value, nil
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	if r.Children != nil {
+  	return r.Children, nil
+	}
+	return nil, nil
 }
