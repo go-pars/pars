@@ -93,7 +93,7 @@ func optimalSepImpl(p Parser, b []byte) Parser {
 					state.Jump()
 					return nil
 				}
-				if !isWhitespace(state.Buffer[state.Index]) {
+				if !IsWhitespace(state.Buffer[state.Index]) {
 					break
 				}
 				state.Advance(1)
@@ -113,7 +113,7 @@ func optimalSepImpl(p Parser, b []byte) Parser {
 					state.Jump()
 					return nil
 				}
-				if !isWhitespace(state.Buffer[state.Index]) {
+				if !IsWhitespace(state.Buffer[state.Index]) {
 					break
 				}
 				state.Advance(1)
@@ -139,7 +139,7 @@ func genericSepImpl(p, s Parser) Parser {
 					state.Jump()
 					return nil
 				}
-				if !isWhitespace(state.Buffer[state.Index]) {
+				if !IsWhitespace(state.Buffer[state.Index]) {
 					break
 				}
 				state.Advance(1)
@@ -153,7 +153,7 @@ func genericSepImpl(p, s Parser) Parser {
 					state.Jump()
 					return nil
 				}
-				if !isWhitespace(state.Buffer[state.Index]) {
+				if !IsWhitespace(state.Buffer[state.Index]) {
 					break
 				}
 				state.Advance(1)
@@ -210,7 +210,7 @@ func Phrase(q ...ParserLike) Parser {
 					state.Jump()
 					return NewTraceError("Phrase", err)
 				}
-				if !isWhitespace(state.Buffer[state.Index]) {
+				if !IsWhitespace(state.Buffer[state.Index]) {
 					break
 				}
 				state.Advance(1)

@@ -2,7 +2,8 @@ package pars
 
 var whitespace = []byte{' ', '\t', '\n', '\v', '\f', '\r'}
 
-func isWhitespace(b byte) bool {
+// IsWhitespace tests if a byte is an ASCII whitespace character.
+func IsWhitespace(b byte) bool {
 	for _, c := range whitespace {
 		if b == c {
 			return true
