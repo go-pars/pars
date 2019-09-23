@@ -22,28 +22,34 @@ var (
 	Space  = Bytes(whitespace...)
 )
 
+// ByteFilter is a function type for filtering a byte.
 type ByteFilter func(byte) bool
 
 func inRange(b, a, z byte) bool {
 	return a <= b && b <= z
 }
 
+// IsUpper tests if a byte is an uppercase letter.
 func IsUpper(b byte) bool {
 	return inRange(b, 'A', 'Z')
 }
 
+// IsLower tests if a byte is a lowercase letter.
 func IsLower(b byte) bool {
 	return inRange(b, 'a', 'z')
 }
 
+// IsLetter tests if a byte is a letter.
 func IsLetter(b byte) bool {
 	return IsUpper(b) || IsLower(b)
 }
 
+// IsLetter tests if a byte is a digit.
 func IsDigit(b byte) bool {
 	return inRange(b, '0', '9')
 }
 
+// IsLetter tests if a byte is a latin character.
 func IsLatin(b byte) bool {
 	return IsUpper(b) || IsLower(b) || IsDigit(b)
 }
