@@ -35,11 +35,14 @@ func Line(state *State, result *Result) error {
 func WordLike(filter ByteFilter) Parser {
 	return func(state *State, result *Result) error {
 		start := state.Index
+
 		state.Mark()
+
 		for {
 			if err := state.Want(1); err != nil {
 				if err == io.EOF {
 					result.Value = string(state.Buffer[start:state.Index])
+					state.Unmark()
 					return nil
 				}
 
@@ -49,12 +52,12 @@ func WordLike(filter ByteFilter) Parser {
 
 			if !filter(state.Buffer[state.Index]) {
 				result.Value = string(state.Buffer[start:state.Index])
+				state.Unmark()
 				return nil
 			}
 
 			state.Advance(1)
 		}
-		return nil
 	}
 }
 
