@@ -19,6 +19,18 @@ func Child(i int) Map {
 	}
 }
 
+// Children will keep the children for the given indices.
+func Children(is ...int) Map {
+	return func(result *Result) error {
+		children := make([]Result, len(is))
+		for i, j := range is {
+			children[i] = result.Children[j]
+		}
+		result.Children = children
+		return nil
+	}
+}
+
 // CatByte will concatenate all children values of type byte into a string.
 // This should be faster compared to the generic Cat which will check for all
 // types that can be converted to bytes and grows the result slice dynamically.
