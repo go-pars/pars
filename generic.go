@@ -72,3 +72,6 @@ var Word = WordLike(IsLetter)
 
 // LatinWord matches a group of latin characters.
 var LatinWord = WordLike(IsLatin)
+
+// SnakeWord matches a snake_case sequence.
+var SnakeWord = WordLike(IsSnake)

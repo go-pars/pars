@@ -19,6 +19,7 @@ var (
 	Letter = ByteRange('A', 'z')
 	Digit  = ByteRange('0', '9')
 	Latin  = Any(Letter, Digit)
+	Snake  = Any(Latin, '_')
 	ASCII  = ByteRange(0, 127)
 	Space  = Bytes(whitespace...)
 )
@@ -53,6 +54,11 @@ func IsDigit(b byte) bool {
 // IsLetter tests if a byte is a latin character.
 func IsLatin(b byte) bool {
 	return IsUpper(b) || IsLower(b) || IsDigit(b)
+}
+
+// IsSnake tests if a byte is a snake_case character.
+func IsSnake(b byte) bool {
+	return IsLatin(b) || b == '_'
 }
 
 // NotLatin matches a non-latin character.
