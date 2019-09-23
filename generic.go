@@ -31,28 +31,41 @@ func Line(state *State, result *Result) error {
 	}
 }
 
-// Word matches a group of non-whitespace characters.
-func Word(state *State, result *Result) error {
-	start := state.Index
+// WordLike matches a group of characters which match the filter.
+func WordLike(filter ByteFilter) Parser {
+	return func(state *State, result *Result) error {
+		start := state.Index
+		state.Mark()
+		for {
+			if err := state.Want(1); err != nil {
+				if err == io.EOF {
+					result.Value = string(state.Buffer[start:state.Index])
+					return nil
+				}
 
-	state.Mark()
+				state.Jump()
+				return err
+			}
 
-	for {
-		if err := state.Want(1); err != nil {
-			if err == io.EOF {
+			if !filter(state.Buffer[state.Index]) {
 				result.Value = string(state.Buffer[start:state.Index])
 				return nil
 			}
 
-			state.Jump()
-			return err
+			state.Advance(1)
 		}
-
-		if isWhitespace(state.Buffer[state.Index]) {
-			result.Value = string(state.Buffer[start:state.Index])
-			return nil
-		}
-
-		state.Advance(1)
+		return nil
 	}
 }
+
+// UpperWord matches a group of uppercase letters.
+var UpperWord = WordLike(IsUpper)
+
+// LowerWord matches a group of uppercase letters.
+var LowerWord = WordLike(IsUpper)
+
+// Word matches a group of letters.
+var Word = WordLike(IsLetter)
+
+// LatinWord matches a group of latin characters.
+var LatinWord = WordLike(IsLatin)

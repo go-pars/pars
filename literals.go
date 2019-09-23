@@ -37,7 +37,7 @@ func integer(state *State, result *Result) error {
 
 		// Add bytes until there is a non-digit byte.
 		for {
-			if state.Want(1) != nil || !isDigit(state.Buffer[state.Index]) {
+			if state.Want(1) != nil || !IsDigit(state.Buffer[state.Index]) {
 				break
 			}
 			p = append(p, state.Buffer[state.Index])
@@ -86,7 +86,7 @@ func number(state *State, result *Result) error {
 
 		// Add bytes until there is a non-digit byte.
 		for {
-			if state.Want(1) != nil || !isDigit(state.Buffer[state.Index]) {
+			if state.Want(1) != nil || !IsDigit(state.Buffer[state.Index]) {
 				break
 			}
 			p = append(p, state.Buffer[state.Index])
@@ -108,7 +108,7 @@ func number(state *State, result *Result) error {
 		state.Advance(1)
 
 		// If there are no digits behind the '.', return the integer.
-		if state.Want(1) != nil || !isDigit(state.Buffer[state.Index]) {
+		if state.Want(1) != nil || !IsDigit(state.Buffer[state.Index]) {
 			state.Jump()
 			result.Value = string(p)
 			return nil
@@ -120,7 +120,7 @@ func number(state *State, result *Result) error {
 
 		// Add bytes until there is a non-digit byte.
 		for {
-			if state.Want(1) != nil || !isDigit(state.Buffer[state.Index]) {
+			if state.Want(1) != nil || !IsDigit(state.Buffer[state.Index]) {
 				break
 			}
 			p = append(p, state.Buffer[state.Index])
@@ -170,7 +170,7 @@ func number(state *State, result *Result) error {
 
 			// Add bytes until there is a non-digit byte.
 			for {
-				if state.Want(1) != nil || !isDigit(state.Buffer[state.Index]) {
+				if state.Want(1) != nil || !IsDigit(state.Buffer[state.Index]) {
 					break
 				}
 				p = append(p, state.Buffer[state.Index])

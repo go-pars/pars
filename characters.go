@@ -22,24 +22,30 @@ var (
 	Space  = Bytes(whitespace...)
 )
 
+type ByteFilter func(byte) bool
+
 func inRange(b, a, z byte) bool {
 	return a <= b && b <= z
 }
 
-func isUpper(b byte) bool {
+func IsUpper(b byte) bool {
 	return inRange(b, 'A', 'Z')
 }
 
-func isLower(b byte) bool {
+func IsLower(b byte) bool {
 	return inRange(b, 'a', 'z')
 }
 
-func isDigit(b byte) bool {
+func IsLetter(b byte) bool {
+	return IsUpper(b) || IsLower(b)
+}
+
+func IsDigit(b byte) bool {
 	return inRange(b, '0', '9')
 }
 
-func isLatin(b byte) bool {
-	return isUpper(b) || isLower(b) || isDigit(b)
+func IsLatin(b byte) bool {
+	return IsUpper(b) || IsLower(b) || IsDigit(b)
 }
 
 // NotLatin matches a non-latin character.
@@ -49,7 +55,7 @@ func NotLatin(state *State, result *Result) error {
 	}
 
 	b := state.Buffer[state.Index]
-	if isLatin(b) {
+	if IsLatin(b) {
 		return NewMismatchError("NotLatin", []byte("non-latin"), state.Position)
 	}
 
