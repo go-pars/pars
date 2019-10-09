@@ -68,6 +68,22 @@ func FromString(s string) *State {
 	return NewState(strings.NewReader(s))
 }
 
+// Read bytes from the state.
+func (s *State) Read(p []byte) (int, error) {
+	l := len(p)
+	err := s.Want(l)
+	if err != nil && err != io.EOF {
+		return 0, err
+	}
+	copy(p, s.Buffer[s.Index:])
+	n := len(s.Buffer[s.Index:])
+	if l < n {
+		n = l
+	}
+	s.Advance(n)
+	return n, err
+}
+
 func (s *State) fill() error {
 	next := make([]byte, bufferReadSize)
 	n, err := s.reader.Read(next)
