@@ -87,11 +87,11 @@ func (s *State) Read(p []byte) (int, error) {
 func (s *State) fill() error {
 	next := make([]byte, bufferReadSize)
 	n, err := s.reader.Read(next)
-	if err == io.EOF {
-		s.isEOF = true
-	}
 	if n == 0 && err != nil {
 		return err
+	}
+	if err == io.EOF {
+		s.isEOF = true
 	}
 	s.Buffer = append(s.Buffer, next[:n]...)
 	return nil
