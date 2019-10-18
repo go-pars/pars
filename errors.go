@@ -21,7 +21,6 @@ func (e *ParserError) Error() string {
 // MismatchError represents a parser mismatch.
 type MismatchError struct {
 	expected []byte
-	position int
 	parser   string
 	not      bool
 }
@@ -68,4 +67,14 @@ func NewTraceError(parser string, err error) error {
 // Error satisfies the error interface.
 func (e *TraceError) Error() string {
 	return fmt.Sprintf("in parser `%s`:\n%s", e.parser, e.err.Error())
+}
+
+// Unwrap will return the underlying error.
+func (e TraceError) Unwrap() error {
+	switch v := e.err.(type) {
+	case *TraceError:
+		return v.Unwrap()
+	default:
+		return v
+	}
 }
