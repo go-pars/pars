@@ -21,6 +21,7 @@ func (e *ParserError) Error() string {
 // MismatchError represents a parser mismatch.
 type MismatchError struct {
 	expected []byte
+	position int
 	parser   string
 	not      bool
 }
