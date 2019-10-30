@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -12,6 +13,20 @@ const (
 	stackGrowthSize = 16
 	bufferReadSize  = 4096
 )
+
+// Position represents the line and byte numbers.
+type Position struct {
+	Line int
+	Byte int
+}
+
+func (p Position) Head() bool {
+	return p.Line == 0 && p.Byte == 0
+}
+
+func (p Position) String() string {
+	return fmt.Sprintf("line %d byte %d", p.Line+1, p.Byte+1)
+}
 
 type frame struct {
 	Index    int
@@ -25,7 +40,7 @@ type stack struct {
 
 func newStack() *stack { return &stack{make([]frame, stackGrowthSize), 0} }
 
-func (s stack) Len() int { return len(s.frames) }
+func (s stack) Len() int { return s.index }
 
 func (s *stack) Push(index int, position Position) {
 	if len(s.frames) == s.index {
@@ -44,16 +59,8 @@ func (s *stack) Pop() (int, Position) {
 	return f.Index, f.Position
 }
 
-func (s *stack) Clear() { s.index = 0 }
-
-// Position represents the line and byte numbers.
-type Position struct {
-	Line int
-	Byte int
-}
-
-func (p Position) String() string {
-	return fmt.Sprintf("line %d byte %d", p.Line, p.Byte)
+func (s *stack) Clear() {
+	s.index = 0
 }
 
 // State represents the parser state.
@@ -75,7 +82,7 @@ func NewState(r io.Reader) *State {
 		index:    0,
 		isEOF:    false,
 		wanted:   0,
-		position: Position{1, 1},
+		position: Position{0, 0},
 		frames:   newStack(),
 	}
 }
@@ -157,35 +164,44 @@ func (s *State) Advance() {
 	for _, b := range s.buffer[s.index : s.index+n] {
 		if b == '\n' {
 			s.position.Line++
-			s.position.Byte = 1
+			s.position.Byte = 0
 		} else {
 			s.position.Byte++
 		}
 	}
 	s.index += n
 	s.wanted = 0
+	s.autoclear()
 }
 
 // Position returns the current position of the state.
 func (s State) Position() Position { return s.position }
 
 // Push the current state frame into the internal stack.
-func (s *State) Push() {
-	s.frames.Push(s.index, s.position)
-}
+func (s *State) Push() { s.frames.Push(s.index, s.position) }
 
 // Pop the latest frame from the internal stack.
-func (s *State) Pop() {
+func (s *State) Pop() error {
+	if s.frames.Len() == 0 {
+		return errors.New("state stack empty")
+	}
 	s.index, s.position = s.frames.Pop()
+	s.autoclear()
+	return nil
 }
 
 // Drop the latest frame from the internal stack.
-func (s *State) Drop() {
-	s.frames.Pop()
+func (s *State) Drop() { s.frames.Pop(); s.autoclear() }
+
+func (s *State) autoclear() {
+	if s.frames.Len() == 0 {
+		s.Clear()
+	}
 }
 
-// Clear will reset the state index and stack.
+// Clear the state buffer and index.
 func (s *State) Clear() {
+	s.buffer = s.buffer[s.index:]
 	s.index = 0
 	s.frames.Clear()
 }

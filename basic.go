@@ -12,7 +12,7 @@ func Fail(state *State, result *Result) error {
 
 // Head will match if the state is at the beginning of the buffer.
 func Head(state *State, result *Result) error {
-	if state.index != 0 {
+	if !state.Position().Head() {
 		return NewParserError("state is not at head", state.Position())
 	}
 	return nil
