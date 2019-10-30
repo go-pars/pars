@@ -1,15 +1,14 @@
 package pars
 
-import (
-	"fmt"
-	"io"
-)
+import "fmt"
 
 // Parser is the function signature of a parser.
 type Parser func(*State, *Result) error
 
+// Map is the function signature for a result mapper.
+type Map func(result *Result) error
+
 // Map applies the callback if the parser matches.
-// Use Map to convert a result into meaningful data.
 func (p Parser) Map(f Map) Parser {
 	return func(state *State, result *Result) error {
 		if err := p(state, result); err != nil {
@@ -19,19 +18,8 @@ func (p Parser) Map(f Map) Parser {
 	}
 }
 
-// Bind a specific value to a result of a parser.
-func (p Parser) Bind(v interface{}) Parser {
-	return func(state *State, result *Result) error {
-		if err := p(state, result); err != nil {
-			return err
-		}
-		result.Value = v
-		return nil
-	}
-}
-
-// ParserLike is a placeholder for types that can potentially be turned into a
-// Parser with AsParser.
+// ParserLike is a placeholder for types that can potentially be converted to a
+// Parser with the AsParser function.
 type ParserLike interface{}
 
 // AsParser attempts to create a Parser from a ParserLike object.
@@ -45,42 +33,16 @@ func AsParser(q ParserLike) Parser {
 		return func(state *State, result *Result) error {
 			return (*p)(state, result)
 		}
-	case byte:
-		return Byte(p)
-	case []byte:
-		return Bytes(p...)
-	case rune:
-		return Rune(p)
-	case []rune:
-		return Runes(p...)
-	case string:
-		return String(p)
 	default:
-		panic(fmt.Errorf("cannot make a parser from `%T`", p))
+		panic(fmt.Errorf("cannot convert type `%T` to a parser", p))
 	}
 }
 
-// AsParsers attempts to create Parsers from the given ParserLike objects.
-func AsParsers(q ...ParserLike) []Parser {
-	p := make([]Parser, len(q))
-	for i := range q {
-		p[i] = AsParser(q[i])
+// AsParsers applies the AsParser function to each argument.
+func AsParsers(qs ...ParserLike) []Parser {
+	ps := make([]Parser, len(qs))
+	for i, q := range qs {
+		ps[i] = AsParser(q)
 	}
-	return p
-}
-
-// Apply a parser to a State.
-func Apply(q ParserLike, s *State) (interface{}, error) {
-	r := Result{}
-	p := AsParser(q)
-	if err := p(s, &r); err != nil && err != io.EOF {
-		return nil, err
-	}
-	if r.Value != nil {
-		return r.Value, nil
-	}
-	if r.Children != nil {
-  	return r.Children, nil
-	}
-	return nil, nil
+	return ps
 }

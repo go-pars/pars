@@ -1,168 +1,191 @@
 package pars
 
 import (
+	"fmt"
 	"io"
 	"strings"
 )
+
+func notEOF(err error) bool { return err != nil && err != io.EOF }
 
 const (
 	stackGrowthSize = 16
 	bufferReadSize  = 4096
 )
 
+type frame struct {
+	Index    int
+	Position Position
+}
+
 type stack struct {
-	buffer []int
+	frames []frame
 	index  int
 }
 
-func newStack() *stack {
-	return &stack{buffer: make([]int, stackGrowthSize)}
-}
+func newStack() *stack { return &stack{make([]frame, stackGrowthSize), 0} }
 
-func (s *stack) Push(n int) {
-	if len(s.buffer) == s.index {
-		s.buffer = append(s.buffer, make([]int, stackGrowthSize)...)
+func (s stack) Len() int { return len(s.frames) }
+
+func (s *stack) Push(index int, position Position) {
+	if len(s.frames) == s.index {
+		s.frames = append(s.frames, make([]frame, stackGrowthSize)...)
 	}
-	s.buffer[s.index] = n
+	s.frames[s.index] = frame{index, position}
 	s.index++
 }
 
-func (s *stack) Pop() (int, bool) {
+func (s *stack) Pop() (int, Position) {
 	if s.index == 0 {
-		return 0, false
+		panic("Pop called on empty stack")
 	}
 	s.index--
-	return s.buffer[s.index], true
+	f := s.frames[s.index]
+	return f.Index, f.Position
 }
 
-func (s *stack) Clear() {
-	s.buffer = make([]int, stackGrowthSize)
-	s.index = 0
+func (s *stack) Clear() { s.index = 0 }
+
+// Position represents the line and byte numbers.
+type Position struct {
+	Line int
+	Byte int
+}
+
+func (p Position) String() string {
+	return fmt.Sprintf("line %d byte %d", p.Line, p.Byte)
 }
 
 // State represents the parser state.
 type State struct {
-	reader io.Reader
-	marks  *stack
-	isEOF  bool
-	isDry  bool
-
-	Buffer   []byte
-	Index    int
-	Position int
+	reader   io.Reader
+	buffer   []byte
+	index    int
+	isEOF    bool
+	wanted   int
+	position Position
+	frames   *stack
 }
 
-// NewState returns a new State for io.Reader.
+// NewState creates a new state from the given io.Reader.
 func NewState(r io.Reader) *State {
-	s := &State{reader: r, marks: newStack()}
-	if err := s.fill(); err != nil {
-		if err != io.EOF {
-			panic("could not read from io.Reader on first read")
-		}
+	return &State{
+		reader:   r,
+		buffer:   make([]byte, 0),
+		index:    0,
+		isEOF:    false,
+		wanted:   0,
+		position: Position{1, 1},
+		frames:   newStack(),
 	}
-	return s
 }
 
-// FromString returns a new State for given string.
-func FromString(s string) *State {
-	return NewState(strings.NewReader(s))
-}
+// FromString creates a new state from the given string.
+func FromString(s string) *State { return NewState(strings.NewReader(s)) }
 
 // Read bytes from the state.
 func (s *State) Read(p []byte) (int, error) {
 	l := len(p)
-	err := s.Want(l)
-	if err != nil && err != io.EOF {
+
+	// Attempt to read full length of p.
+	if err := s.Want(l); notEOF(err) {
 		return 0, err
 	}
-	copy(p, s.Buffer[s.Index:])
-	n := len(s.Buffer[s.Index:])
-	if l < n {
-		n = l
+
+	// Check for the number of bytes left in the buffer.
+	n := len(s.Buffer())
+	if n < l {
+		l = n
 	}
-	s.Advance(n)
+
+	copy(p, s.Buffer())
+	s.Advance()
+	return n, nil
+}
+
+func (s *State) fill() (int, error) {
+	p := make([]byte, bufferReadSize)
+	n, err := s.reader.Read(p)
+	if n > 0 || err == nil {
+		s.buffer = append(s.buffer, p[:n]...)
+	}
 	return n, err
 }
 
-func (s *State) fill() error {
-	next := make([]byte, bufferReadSize)
-	n, err := s.reader.Read(next)
-	if n == 0 && err != nil {
-		return err
-	}
-	if err == io.EOF {
-		s.isEOF = true
-	}
-	s.Buffer = append(s.Buffer, next[:n]...)
-	return nil
-}
-
-// Want tells the State how many bytes are wanted.
-// Data is read from the io.Reader if there are not enough bytes.
+// Want queries the state for the number of bytes wanted.
+// If there are not enough bytes in the buffer, additional bytes are read
+// from the io.Reader.
 func (s *State) Want(n int) error {
-	if len(s.Buffer) < s.Index+n {
+	// There are not enough bytes left in the buffer.
+	if s.index+n >= len(s.buffer) {
+		// The io.Reader already reached EOF.
 		if s.isEOF {
 			return io.EOF
 		}
-		return s.fill()
+
+		// Read the next block of bytes.
+		m, err := s.fill()
+		if err == io.EOF {
+			s.isEOF = true
+		} else if err != nil {
+			return err
+		}
+
+		// Still not enough bytes.
+		if m < n {
+			s.wanted = m
+			return io.EOF
+		}
 	}
+
+	s.wanted = n
 	return nil
 }
 
-// Advance the Index and Position of the state.
-func (s *State) Advance(n int) {
-	s.Index += n
-	s.Position += n
-}
+// Head returns the first byte in the buffer.
+func (s State) Head() byte { return s.buffer[s.index] }
 
-// Mark the current Index for future Jump.
-func (s *State) Mark() {
-	s.marks.Push(s.Index)
-}
+// Buffer returns the buffer starting at the current state position.
+func (s State) Buffer() []byte { return s.buffer[s.index:] }
 
-// Unmark the latest Mark.
-func (s *State) Unmark() bool {
-	_, ok := s.marks.Pop()
-	return ok
-}
-
-// Remark the latest Mark.
-func (s *State) Remark() {
-	s.Unmark()
-	s.Mark()
-}
-
-// Jump to the latest Mark.
-func (s *State) Jump() bool {
-	n, ok := s.marks.Pop()
-	if !ok {
-		return false
+// Advance the index by the amount given in a previous Want call.
+func (s *State) Advance() {
+	n := s.wanted
+	if n == 0 {
+		panic("no previous call to Want")
 	}
-	s.Position -= s.Index - n
-	s.Index = n
-	return true
+	for _, b := range s.buffer[s.index : s.index+n] {
+		if b == '\n' {
+			s.position.Line++
+			s.position.Byte = 1
+		} else {
+			s.position.Byte++
+		}
+	}
+	s.index += n
+	s.wanted = 0
 }
 
-// Dry makes the state dry.
-func (s *State) Dry() {
-	s.isDry = true
+// Position returns the current position of the state.
+func (s State) Position() Position { return s.position }
+
+// Push the current state frame into the internal stack.
+func (s *State) Push() {
+	s.frames.Push(s.index, s.position)
 }
 
-// Wet makes the state wet.
-func (s *State) Wet() {
-	s.isDry = false
+// Pop the latest frame from the internal stack.
+func (s *State) Pop() {
+	s.index, s.position = s.frames.Pop()
 }
 
-// Clear the state Buffer, Index, and Marks.
+// Drop the latest frame from the internal stack.
+func (s *State) Drop() {
+	s.frames.Pop()
+}
+
+// Clear will reset the state index and stack.
 func (s *State) Clear() {
-	if !s.isDry {
-		s.Buffer = s.Buffer[s.Index:]
-		s.Index = 0
-		s.marks.Clear()
-	}
-}
-
-// EOF returns true if the state reached the end of the reader.
-func (s *State) EOF() bool {
-	return s.isEOF
+	s.index = 0
+	s.frames.Clear()
 }

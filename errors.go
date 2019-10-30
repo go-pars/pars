@@ -4,78 +4,54 @@ import "fmt"
 
 // ParserError represents a generic parser error.
 type ParserError struct {
-	message  string
-	position int
+	err      error
+	position Position
 }
 
 // NewParserError creates a new ParserError.
-func NewParserError(message string, position int) error {
-	return &ParserError{message: message, position: position}
+func NewParserError(v interface{}, position Position) error {
+	return &ParserError{asError(v), position}
 }
 
-// Error satisfies the error interface
-func (e *ParserError) Error() string {
-	return fmt.Sprintf("%s at position %d", e.message, e.position)
+// Error satisfies the error interface.
+func (e ParserError) Error() string {
+	return fmt.Sprintf("%v at %s", e.err, e.position)
 }
 
-// MismatchError represents a parser mismatch.
+// MismatchError indicates that a parser has failed to match a specific
+// sequence of bytes at the given position.
 type MismatchError struct {
-	expected []byte
-	position int
-	parser   string
-	not      bool
+	expected string
+	position Position
 }
 
 // NewMismatchError creates a new MismatchError.
-func NewMismatchError(parser string, expected []byte, position int) error {
-	return &MismatchError{
-		expected: expected,
-		position: position,
-		parser:   parser,
-		not:      false,
-	}
-}
-
-// NewNotMismatchError creates a new MismatchError.
-func NewNotMismatchError(parser string, expected []byte, position int) error {
-	return &MismatchError{
-		parser:   parser,
-		expected: expected,
-		position: position,
-		not:      true,
-	}
+func NewMismatchError(name string, expected interface{}, position Position) error {
+	return NewTraceError(name, &MismatchError{asString(expected), position})
 }
 
 // Error satisfies the error interface.
-func (e *MismatchError) Error() string {
-	if e.not {
-		return fmt.Sprintf("`%s` expected not `%s` at position %d", e.parser, e.expected, e.position)
-	}
-	return fmt.Sprintf("`%s` expected `%s` at position %d", e.parser, e.expected, e.position)
+func (e MismatchError) Error() string {
+	return fmt.Sprintf("expected `%s` at %s", e.expected, e.position)
 }
 
-// TraceError traces nested errors.
+// TraceError holds nested error values.
 type TraceError struct {
-	parser string
-	err    error
+	name string
+	err  error
 }
 
-// NewTraceError creates a new TraceError
-func NewTraceError(parser string, err error) error {
-	return &TraceError{parser: parser, err: err}
+// NewTraceError creates a new trace error.
+func NewTraceError(name string, err error) error {
+	return &TraceError{name, err}
 }
 
 // Error satisfies the error interface.
-func (e *TraceError) Error() string {
-	return fmt.Sprintf("in parser `%s`:\n%s", e.parser, e.err.Error())
+func (e TraceError) Error() string {
+	return fmt.Sprintf("in `%s`: %v", e.name, e.err)
 }
 
-// Unwrap will return the underlying error.
+// Unwrap returns the underlying error value.
 func (e TraceError) Unwrap() error {
-	switch v := e.err.(type) {
-	case *TraceError:
-		return v.Unwrap()
-	default:
-		return v
-	}
+	return e.err
 }
