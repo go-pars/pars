@@ -111,7 +111,7 @@ func ByteRange(begin, end byte) Parser {
 		return Byte(begin)
 	default:
 		name := fmt.Sprintf("ByteRange(%s, %s)", byteRep(begin), byteRep(end))
-		e := fmt.Sprintf("in range %s-%s", byteRep(begin), byteRep(end))
+		rep := fmt.Sprintf("in range %s-%s", byteRep(begin), byteRep(end))
 
 		return func(state *State, result *Result) error {
 			if err := state.Want(1); err != nil {
@@ -119,7 +119,7 @@ func ByteRange(begin, end byte) Parser {
 			}
 			c := state.Head()
 			if c < begin || end < c {
-				return NewMismatchError(name, e, state.Position())
+				return NewMismatchError(name, rep, state.Position())
 			}
 			result.SetToken([]byte{c})
 			state.Advance()
@@ -137,17 +137,17 @@ func Bytes(p []byte) Parser {
 	case 1:
 		return Byte(p[0])
 	default:
-		e := fmt.Sprintf("[%s]", strings.Join(byteReps(p), ", "))
-		name := fmt.Sprintf("Bytes([%s])", e)
+		reps := fmt.Sprintf("[%s]", strings.Join(byteReps(p), ", "))
+		name := fmt.Sprintf("Bytes([%s])", reps)
+
 		return func(state *State, result *Result) error {
 			if err := state.Want(n); err != nil {
 				return NewTraceError(name, err)
 			}
-			buffer := state.Buffer()[:n]
-			if !bytes.Equal(p, buffer) {
-				return NewMismatchError(name, e, state.Position())
+			if !bytes.Equal(p, state.Buffer()) {
+				return NewMismatchError(name, reps, state.Position())
 			}
-			result.SetToken(buffer)
+			result.SetToken(p)
 			state.Advance()
 			return nil
 		}

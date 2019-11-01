@@ -137,3 +137,99 @@ func BenchmarkRune(b *testing.B) {
 		})
 	})
 }
+
+func TestRuneRange(t *testing.T) {
+	t.Run("matching", func(t *testing.T) {
+		e := rune('H')
+		s := pars.FromString("Hello world!")
+		r := pars.Result{}
+
+		require.NoError(t, pars.RuneRange('A', 'Z')(s, &r))
+		require.NotEmpty(t, r.Value)
+		assert.Nil(t, r.Token)
+		assert.Equal(t, r.Value, e)
+		assert.Nil(t, r.Children)
+	})
+
+	t.Run("mismatch", func(t *testing.T) {
+		s := pars.FromString("Hello world!")
+		r := pars.Result{}
+
+		require.Error(t, pars.RuneRange('a', 'z')(s, &r))
+		require.Nil(t, r.Token)
+		assert.Nil(t, r.Value)
+		assert.Nil(t, r.Children)
+	})
+}
+
+func BenchmarkRangeRune(b *testing.B) {
+	s := pars.FromString("Hello world!")
+
+	b.Run("matching", func(b *testing.B) {
+		p := pars.RuneRange('A', 'Z')
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+
+	b.Run("mismatch", func(b *testing.B) {
+		p := pars.RuneRange('a', 'z')
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+}
+
+func TestRunes(t *testing.T) {
+	t.Run("matching", func(t *testing.T) {
+		e := []rune("Hello")
+		s := pars.FromString("Hello world!")
+		r := pars.Result{}
+
+		require.NoError(t, pars.Runes(e)(s, &r))
+		require.NotEmpty(t, r.Value)
+		assert.Nil(t, r.Token)
+		assert.ElementsMatch(t, r.Value, e)
+		assert.Nil(t, r.Children)
+	})
+
+	t.Run("mismatch", func(t *testing.T) {
+		s := pars.FromString("Hello world!")
+		r := pars.Result{}
+
+		require.Error(t, pars.Runes([]rune("hello"))(s, &r))
+		require.Nil(t, r.Token)
+		assert.Nil(t, r.Value)
+		assert.Nil(t, r.Children)
+	})
+}
+
+func BenchmarkRunes(b *testing.B) {
+	s := pars.FromString("Hello world!")
+
+	b.Run("matching", func(b *testing.B) {
+		p := pars.Runes([]rune("Hello"))
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+
+	b.Run("mismatch", func(b *testing.B) {
+		p := pars.Runes([]rune("hello"))
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+}

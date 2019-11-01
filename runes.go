@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -84,6 +85,59 @@ func Rune(rs ...rune) Parser {
 				return NewMismatchError(name, reps, state.Position())
 			}
 			result.SetValue(r)
+			state.Advance()
+			return nil
+		}
+	}
+}
+
+// RuneRange will match any rune within the given range.
+func RuneRange(begin, end rune) Parser {
+	switch sign(int(end - begin)) {
+	case -1:
+		panic(fmt.Errorf("rune `%s` is greater than `%s`", runeRep(begin), runeRep(end)))
+	case 0:
+		return Rune(begin)
+	default:
+		name := fmt.Sprintf("RuneRange(%s, %s)", runeRep(begin), runeRep(end))
+		rep := fmt.Sprintf("in range %s-%s", runeRep(begin), runeRep(end))
+
+		return func(state *State, result *Result) error {
+			r, err := readRune(state)
+			if err != nil {
+				return NewTraceError(name, err)
+			}
+			if r < begin || end < r {
+				return NewMismatchError(name, rep, state.Position())
+			}
+			result.SetValue(r)
+			state.Advance()
+			return nil
+		}
+	}
+}
+
+// Runes will match the given sequence of runes.
+func Runes(rs []rune) Parser {
+	n := len(rs)
+	switch n {
+	case 0:
+		return Epsilon
+	case 1:
+		return Rune(rs[0])
+	default:
+		reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))
+		name := fmt.Sprintf("Runes([%s])", reps)
+		p := []byte(string(rs))
+
+		return func(state *State, result *Result) error {
+			if err := state.Want(len(p)); err != nil {
+				return NewTraceError(name, err)
+			}
+			if !bytes.Equal(state.Buffer(), p) {
+				return NewMismatchError(name, reps, state.Position())
+			}
+			result.SetValue(rs)
 			state.Advance()
 			return nil
 		}
