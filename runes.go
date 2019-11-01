@@ -53,16 +53,19 @@ func Rune(rs ...rune) Parser {
 			return nil
 		}
 	case 1:
-		e := rs[0]
-		rep := runeRep(e)
+		r := rs[0]
+		rep := runeRep(r)
 		name := fmt.Sprintf("Rune(%s)", rep)
 
+		n := utf8.RuneLen(r)
+		p := make([]byte, n)
+		utf8.EncodeRune(p, r)
+
 		return func(state *State, result *Result) error {
-			r, err := readRune(state)
-			if err != nil {
+			if err := state.Want(n); err != nil {
 				return NewTraceError(name, err)
 			}
-			if r != e {
+			if !bytes.Equal(state.Buffer(), p) {
 				return NewMismatchError(name, rep, state.Position())
 			}
 			result.SetValue(r)

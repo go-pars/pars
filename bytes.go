@@ -144,7 +144,7 @@ func Bytes(p []byte) Parser {
 			if err := state.Want(n); err != nil {
 				return NewTraceError(name, err)
 			}
-			if !bytes.Equal(p, state.Buffer()) {
+			if !bytes.Equal(state.Buffer(), p) {
 				return NewMismatchError(name, reps, state.Position())
 			}
 			result.SetToken(p)

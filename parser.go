@@ -33,6 +33,16 @@ func AsParser(q ParserLike) Parser {
 		return func(state *State, result *Result) error {
 			return (*p)(state, result)
 		}
+	case byte:
+		return Byte(p)
+	case []byte:
+		return Bytes(p)
+	case rune:
+		return Rune(p)
+	case []rune:
+		return Runes(p)
+	case string:
+		return String(p)
 	default:
 		panic(fmt.Errorf("cannot convert type `%T` to a parser", p))
 	}

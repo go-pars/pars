@@ -50,7 +50,7 @@ func NewTraceError(name string, err error) error {
 
 // Error satisfies the error interface.
 func (e TraceError) Error() string {
-	return fmt.Sprintf("in `%s`: %v", e.name, e.err)
+	return fmt.Sprintf("in `%s`:\n%v", e.name, e.err)
 }
 
 // Unwrap returns the underlying error value.
