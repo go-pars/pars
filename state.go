@@ -100,12 +100,12 @@ func (s *State) Read(p []byte) (int, error) {
 	}
 
 	// Check for the number of bytes left in the buffer.
-	n := len(s.Buffer())
+	n := len(s.buffer)
 	if n < l {
 		l = n
 	}
 
-	copy(p, s.Buffer())
+	copy(p, s.buffer)
 	s.Advance()
 	return n, nil
 }
@@ -152,8 +152,11 @@ func (s *State) Want(n int) error {
 // Head returns the first byte in the buffer.
 func (s State) Head() byte { return s.buffer[s.index] }
 
-// Buffer returns the buffer starting at the current state position.
-func (s State) Buffer() []byte { return s.buffer[s.index:] }
+// Buffer returns the byte slice which is accessible to the user.
+func (s State) Buffer() []byte { return s.buffer[s.index : s.index+s.wanted] }
+
+// Dump returns the entire remaining buffer content.
+func (s State) Dump() []byte { return s.buffer[s.index:] }
 
 // Advance the index by the amount given in a previous Want call.
 func (s *State) Advance() {

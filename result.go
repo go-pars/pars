@@ -15,8 +15,8 @@ type Result struct {
 }
 
 // SetToken sets the token and clears other fields.
-func (r *Result) SetToken(p interface{}) {
-	r.Token = asBytes(p)
+func (r *Result) SetToken(p []byte) {
+	r.Token = p
 	r.Value = nil
 	r.Children = nil
 }

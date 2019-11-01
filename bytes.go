@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var reptbl = []string{
+var byteReptbl = []string{
 	"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
 	"bs", "ht", "nl", "vt", "np", "cr", "so", "si",
 	"dle", "dc1", "dc2", "dc3", "dc4", "nak", "syn", "etb",
@@ -25,49 +25,57 @@ var reptbl = []string{
 	"x", "y", "z", "{", "|", "}", "~", "del",
 }
 
-func rep(c byte) string {
-	if int(c) < len(reptbl) {
-		return fmt.Sprintf("`%s`", reptbl[int(c)])
+func byteRep(c byte) string {
+	if int(c) < len(byteReptbl) {
+		return fmt.Sprintf("`%s`", byteReptbl[int(c)])
 	}
 	return fmt.Sprintf("0x%x", c)
 }
 
-func reps(p []byte) []string {
+func byteReps(p []byte) []string {
 	r := make([]string, len(p))
 	for i, c := range p {
-		r[i] = rep(c)
+		r[i] = byteRep(c)
 	}
 	return r
 }
 
-// Byte will match the given byte.
-func Byte(c byte) Parser {
-	name := fmt.Sprintf("Byte(%s)", rep(c))
-	return func(state *State, result *Result) error {
-		if err := state.Want(1); err != nil {
-			return NewTraceError(name, err)
-		}
-		if state.Head() != c {
-			return NewMismatchError(name, c, state.Position())
-		}
-		result.SetToken(asBytes(c))
-		state.Advance()
-		return nil
-	}
-}
-
-// AnyByte will match any of the given bytes.
-func AnyByte(p ...byte) Parser {
+// Byte will attempt to match the next single byte.
+// If no bytes are given, it will match any byte.
+// Otherwise, the given bytes will be tested for a match.
+func Byte(p ...byte) Parser {
 	switch len(p) {
 	case 0:
-		return Epsilon
+		return func(state *State, result *Result) error {
+			if err := state.Want(1); err != nil {
+				return NewTraceError("Byte()", err)
+			}
+			result.SetToken([]byte{state.Head()})
+			state.Advance()
+			return nil
+		}
 	case 1:
-		return Byte(p[0])
+		c := p[0]
+		rep := byteRep(c)
+		name := fmt.Sprintf("Byte(%s)", rep)
+
+		return func(state *State, result *Result) error {
+			if err := state.Want(1); err != nil {
+				return NewTraceError(name, err)
+			}
+			if state.Head() != c {
+				return NewMismatchError(name, rep, state.Position())
+			}
+			result.SetToken([]byte{c})
+			state.Advance()
+			return nil
+		}
 	default:
+		reps := strings.Join(byteReps(p), ", ")
+		name := fmt.Sprintf("Byte(%s)", reps)
+
 		s := string(p)
 		mismatch := func(c byte) bool { return strings.IndexByte(s, c) < 0 }
-
-		name := fmt.Sprintf("AnyByte(%s)", strings.Join(reps(p), ", "))
 
 		return func(state *State, result *Result) error {
 			if err := state.Want(1); err != nil {
@@ -75,9 +83,9 @@ func AnyByte(p ...byte) Parser {
 			}
 			c := state.Head()
 			if mismatch(c) {
-				return NewMismatchError(name, s, state.Position())
+				return NewMismatchError(name, reps, state.Position())
 			}
-			result.SetToken(asBytes(c))
+			result.SetToken([]byte{c})
 			state.Advance()
 			return nil
 		}
@@ -98,12 +106,12 @@ func sign(i int) int {
 func ByteRange(begin, end byte) Parser {
 	switch sign(int(end - begin)) {
 	case -1:
-		panic(fmt.Errorf("byte `%s` is greater than `%s`", rep(begin), rep(end)))
+		panic(fmt.Errorf("byte `%s` is greater than `%s`", byteRep(begin), byteRep(end)))
 	case 0:
 		return Byte(begin)
 	default:
-		name := fmt.Sprintf("ByteRange(%s, %s)", rep(begin), rep(end))
-		e := fmt.Sprintf("in range %s-%s", rep(begin), rep(end))
+		name := fmt.Sprintf("ByteRange(%s, %s)", byteRep(begin), byteRep(end))
+		e := fmt.Sprintf("in range %s-%s", byteRep(begin), byteRep(end))
 
 		return func(state *State, result *Result) error {
 			if err := state.Want(1); err != nil {
@@ -113,7 +121,7 @@ func ByteRange(begin, end byte) Parser {
 			if c < begin || end < c {
 				return NewMismatchError(name, e, state.Position())
 			}
-			result.SetToken(asBytes(c))
+			result.SetToken([]byte{c})
 			state.Advance()
 			return nil
 		}
@@ -129,7 +137,7 @@ func Bytes(p []byte) Parser {
 	case 1:
 		return Byte(p[0])
 	default:
-		e := fmt.Sprintf("[%s]", strings.Join(reps(p), ", "))
+		e := fmt.Sprintf("[%s]", strings.Join(byteReps(p), ", "))
 		name := fmt.Sprintf("Bytes([%s])", e)
 		return func(state *State, result *Result) error {
 			if err := state.Want(n); err != nil {

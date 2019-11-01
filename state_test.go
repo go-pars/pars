@@ -18,7 +18,7 @@ func TestState(t *testing.T) {
 		assert.Equal(t, n, len(e))
 		assert.NoError(t, err)
 		assert.Equal(t, string(p), e)
-		assert.Empty(t, s.Buffer())
+		assert.Empty(t, s.Dump())
 	})
 
 	t.Run("Want", func(t *testing.T) {
@@ -35,11 +35,11 @@ func TestState(t *testing.T) {
 
 		assert.NoError(t, s.Want(1))
 		s.Advance()
-		assert.Equal(t, string(s.Buffer()), e[1:])
+		assert.Equal(t, string(s.Dump()), e[1:])
 
 		assert.NoError(t, s.Want(5))
 		s.Advance()
-		assert.Equal(t, string(s.Buffer()), e[6:])
+		assert.Equal(t, string(s.Dump()), e[6:])
 	})
 
 	t.Run("Stack", func(t *testing.T) {
@@ -49,22 +49,22 @@ func TestState(t *testing.T) {
 		s.Push()
 		assert.NoError(t, s.Want(1))
 		s.Advance()
-		assert.Equal(t, string(s.Buffer()), e[1:])
+		assert.Equal(t, string(s.Dump()), e[1:])
 		s.Push()
 		assert.NoError(t, s.Want(5))
 		s.Advance()
-		assert.Equal(t, string(s.Buffer()), e[6:])
+		assert.Equal(t, string(s.Dump()), e[6:])
 		s.Pop()
-		assert.Equal(t, string(s.Buffer()), e[1:])
+		assert.Equal(t, string(s.Dump()), e[1:])
 		s.Pop()
-		assert.Equal(t, string(s.Buffer()), e)
+		assert.Equal(t, string(s.Dump()), e)
 
 		s.Push()
 		assert.NoError(t, s.Want(6))
 		s.Advance()
-		assert.Equal(t, string(s.Buffer()), e[6:])
+		assert.Equal(t, string(s.Dump()), e[6:])
 		s.Drop()
-		assert.Equal(t, string(s.Buffer()), e[6:])
+		assert.Equal(t, string(s.Dump()), e[6:])
 	})
 }
 
