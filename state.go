@@ -124,7 +124,7 @@ func (s *State) fill() (int, error) {
 // from the io.Reader.
 func (s *State) Want(n int) error {
 	// There are not enough bytes left in the buffer.
-	if s.index+n >= len(s.buffer) {
+	if s.index+n > len(s.buffer) {
 		// The io.Reader already reached EOF.
 		if s.isEOF {
 			return io.EOF
