@@ -32,3 +32,20 @@ func Seq(qs ...ParserLike) Parser {
 		return nil
 	}
 }
+
+func Any(qs ...ParserLike) Parser {
+	ps := AsParsers(qs...)
+	name := fmt.Sprintf("Any(%s)", strings.Join(typeReps(qs), ", "))
+
+	return func(state *State, result *Result) error {
+		state.Push()
+		for _, p := range ps {
+			if p(state, result) == nil {
+				state.Drop()
+				return nil
+			}
+		}
+		state.Pop()
+		return NewParserError(name, state.Position())
+	}
+}
