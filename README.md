@@ -286,6 +286,6 @@ JSON parser included in the examples directory.
 | strings.go     | Parsers for mathing string patterns.         |
 | combinators.go | Core combinator definitions.                 |
 | characters.go  | Parsers for matching common character sets.  |
-| literals.go    | Optimized common use combined parsers.       |
+| literals.go    | Parsers for various literal values.          |
 | auxiliary.go   | Optimized common use combinators.            |
 | mappings.go    | Utilities for common result mappings.        |

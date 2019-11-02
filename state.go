@@ -152,6 +152,9 @@ func (s *State) Want(n int) error {
 // Head returns the first byte in the buffer.
 func (s State) Head() byte { return s.buffer[s.index] }
 
+// Is checks if the head is the given byte.
+func (s State) Is(c byte) bool { return s.buffer[s.index] == c }
+
 // Buffer returns the byte slice which is accessible to the user.
 func (s State) Buffer() []byte { return s.buffer[s.index : s.index+s.wanted] }
 

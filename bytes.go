@@ -63,7 +63,7 @@ func Byte(p ...byte) Parser {
 			if err := state.Want(1); err != nil {
 				return NewTraceError(name, err)
 			}
-			if state.Head() != c {
+			if !state.Is(c) {
 				return NewMismatchError(name, rep, state.Position())
 			}
 			result.SetToken([]byte{c})
