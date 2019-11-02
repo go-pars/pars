@@ -43,8 +43,8 @@ func Any(qs ...ParserLike) Parser {
 
 	return func(state *State, result *Result) error {
 		state.Push()
-		for i, p := range ps {
-			if errs[i] := p(state, result); errs[i] == nil {
+		for _, p := range ps {
+			if p(state, result) == nil {
 				state.Drop()
 				return nil
 			}
@@ -58,12 +58,43 @@ func Maybe(q ParserLike) Parser {
 	p := AsParser(q)
 
 	return func(state *State, result *Result) error {
-  	state.Push()
-  	if p(state, result) != nil {
-    	state.Pop()
-    	return nil
-  	}
-  	state.Drop()
+		state.Push()
+		if p(state, result) != nil {
+			state.Pop()
+			return nil
+		}
+		state.Drop()
+		return nil
+	}
+}
+
+func Many(q ParserLike) Parser {
+	p := AsParser(q)
+	name := fmt.Sprintf("Many(%s)", typeRep(q))
+	fmt.Println(name)
+
+	return func(state *State, result *Result) error {
+		v := make([]Result, 1)
+
+		state.Push()
+		if err := p(state, &v[0]); err != nil {
+			state.Pop()
+			return NewTraceError(name, err)
+		}
+		state.Drop()
+
+		tmp := Result{}
+
+		state.Push()
+		for p(state, &tmp) == nil {
+			state.Drop()
+			state.Push()
+			v = append(v, tmp)
+			tmp = Result{}
+		}
+		state.Pop()
+
+		result.SetChildren(v)
 		return nil
 	}
 }
