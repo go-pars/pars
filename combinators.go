@@ -6,10 +6,14 @@ import (
 	"strings"
 )
 
+func typeRep(q ParserLike) string {
+	return reflect.TypeOf(q).String()
+}
+
 func typeReps(qs []ParserLike) []string {
 	r := make([]string, len(qs))
 	for i, q := range qs {
-		r[i] = reflect.TypeOf(q).String()
+		r[i] = typeRep(q)
 	}
 	return r
 }
@@ -39,13 +43,27 @@ func Any(qs ...ParserLike) Parser {
 
 	return func(state *State, result *Result) error {
 		state.Push()
-		for _, p := range ps {
-			if p(state, result) == nil {
+		for i, p := range ps {
+			if errs[i] := p(state, result); errs[i] == nil {
 				state.Drop()
 				return nil
 			}
 		}
 		state.Pop()
 		return NewParserError(name, state.Position())
+	}
+}
+
+func Maybe(q ParserLike) Parser {
+	p := AsParser(q)
+
+	return func(state *State, result *Result) error {
+  	state.Push()
+  	if p(state, result) != nil {
+    	state.Pop()
+    	return nil
+  	}
+  	state.Drop()
+		return nil
 	}
 }
