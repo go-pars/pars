@@ -284,7 +284,7 @@ JSON parser included in the examples directory.
 | bytes.go       | Parsers for mathing byte patterns.           |
 | runes.go       | Parsers for mathing rune patterns.           |
 | strings.go     | Parsers for mathing string patterns.         |
-| combinators.go | Core combinators (Seq, Any, Maybe, Many).    |
+| combinators.go | Core combinator definitions.                 |
 | characters.go  | Parsers for matching common character sets.  |
 | literals.go    | Optimized common use combined parsers.       |
 | auxiliary.go   | Optimized common use combinators.            |

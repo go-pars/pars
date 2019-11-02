@@ -23,8 +23,9 @@ func Seq(qs ...ParserLike) Parser {
 	name := fmt.Sprintf("Seq(%s)", strings.Join(typeReps(qs), ", "))
 
 	return func(state *State, result *Result) error {
-		state.Push()
 		v := make([]Result, len(ps))
+
+		state.Push()
 		for i, p := range ps {
 			if err := p(state, &v[i]); err != nil {
 				state.Pop()
@@ -32,6 +33,7 @@ func Seq(qs ...ParserLike) Parser {
 			}
 		}
 		state.Drop()
+
 		result.SetChildren(v)
 		return nil
 	}
@@ -50,6 +52,7 @@ func Any(qs ...ParserLike) Parser {
 			}
 		}
 		state.Pop()
+
 		return NewParserError(name, state.Position())
 	}
 }
@@ -64,6 +67,7 @@ func Maybe(q ParserLike) Parser {
 			return nil
 		}
 		state.Drop()
+
 		return nil
 	}
 }
@@ -71,10 +75,9 @@ func Maybe(q ParserLike) Parser {
 func Many(q ParserLike) Parser {
 	p := AsParser(q)
 	name := fmt.Sprintf("Many(%s)", typeRep(q))
-	fmt.Println(name)
 
 	return func(state *State, result *Result) error {
-		v := make([]Result, 1)
+		v := make([]Result, 1, 5)
 
 		state.Push()
 		if err := p(state, &v[0]); err != nil {
@@ -83,16 +86,35 @@ func Many(q ParserLike) Parser {
 		}
 		state.Drop()
 
-		tmp := Result{}
-
 		state.Push()
-		for p(state, &tmp) == nil {
+		for p(state, result) == nil {
 			state.Drop()
 			state.Push()
-			v = append(v, tmp)
-			tmp = Result{}
+			v = append(v, *result)
+			*result = Result{}
 		}
 		state.Pop()
+
+		result.SetChildren(v)
+		return nil
+	}
+}
+
+func Count(q ParserLike, n int) Parser {
+	p := AsParser(q)
+	name := fmt.Sprintf("Count(%s, %d)", typeRep(q), n)
+
+	return func(state *State, result *Result) error {
+		v := make([]Result, n)
+
+		state.Push()
+		for i := 0; i < n; i++ {
+			if err := p(state, &v[i]); err != nil {
+				state.Pop()
+				return NewTraceError(name, err)
+			}
+		}
+		state.Drop()
 
 		result.SetChildren(v)
 		return nil

@@ -191,10 +191,9 @@ func BenchmarkMaybe(b *testing.B) {
 }
 
 func TestMany(t *testing.T) {
-	e := byte('H')
-	p := pars.Many(e)
+	p := pars.Many(pars.ByteRange('A', 'Z'))
 
-	t.Run("matching", func(t *testing.T) {
+	t.Run("match one", func(t *testing.T) {
 		s := pars.FromString("Hello world!")
 		r := pars.Result{}
 
@@ -202,7 +201,18 @@ func TestMany(t *testing.T) {
 		assert.Nil(t, r.Token)
 		assert.Nil(t, r.Value)
 		require.NotEmpty(t, r.Children)
-		assert.Equal(t, r.Children[0].Token[0], e)
+		assert.Equal(t, r.Children[0].Token[0], byte('H'))
+	})
+
+	t.Run("match many", func(t *testing.T) {
+		s := pars.FromString("HELLO WORLD!")
+		r := pars.Result{}
+
+		require.NoError(t, p(s, &r))
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.Value)
+		require.NotEmpty(t, r.Children)
+		assert.Len(t, r.Children, 5)
 	})
 
 	t.Run("mismatch", func(t *testing.T) {
@@ -217,10 +227,20 @@ func TestMany(t *testing.T) {
 }
 
 func BenchmarkMany(b *testing.B) {
-	p := pars.Many('H')
+	p := pars.Many(pars.ByteRange('A', 'Z'))
 
-	b.Run("matching", func(b *testing.B) {
+	b.Run("match one", func(b *testing.B) {
 		s := pars.FromString("Hello world!")
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+
+	b.Run("match many", func(b *testing.B) {
+		s := pars.FromString("HELLO WORLD!")
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			s.Push()
@@ -231,6 +251,60 @@ func BenchmarkMany(b *testing.B) {
 
 	b.Run("mismatch", func(b *testing.B) {
 		s := pars.FromString("hello world!")
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+}
+
+func TestCount(t *testing.T) {
+	e := "Hello world!"
+	p := pars.Count(pars.Rune(), len(e))
+
+	t.Run("matching", func(t *testing.T) {
+		s := pars.FromString(e)
+		r := pars.Result{}
+
+		require.NoError(t, p(s, &r))
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.Value)
+		require.NotEmpty(t, r.Children)
+		require.Len(t, r.Children, len(e))
+		for i, c := range e {
+			assert.Equal(t, r.Children[i].Value, c)
+		}
+	})
+
+	t.Run("mismatch", func(t *testing.T) {
+		s := pars.FromString(e[:5])
+		r := pars.Result{}
+
+		require.Error(t, p(s, &r))
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.Value)
+		require.Nil(t, r.Children)
+	})
+}
+
+func BenchmarkCount(b *testing.B) {
+	e := "Hello world!"
+	p := pars.Count(pars.Byte(), len(e))
+
+	b.Run("matching", func(b *testing.B) {
+		s := pars.FromString(e)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			s.Push()
+			p(s, pars.Void)
+			s.Pop()
+		}
+	})
+
+	b.Run("mismatch", func(b *testing.B) {
+		s := pars.FromString(e[:5])
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			s.Push()
