@@ -4,232 +4,138 @@ import (
 	"testing"
 
 	"github.com/ktnyt/pars"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRune(t *testing.T) {
 	t.Run("no argument", func(t *testing.T) {
-		e := rune('H')
-		s := pars.FromString("Hello world!")
-		r := pars.Result{}
-
-		require.NoError(t, pars.Rune()(s, &r))
-		require.NotEmpty(t, r.Value)
-		assert.Nil(t, r.Token)
-		assert.Equal(t, r.Value, e)
-		assert.Nil(t, r.Children)
+		if msg := matching(
+			pars.Rune(),
+			matchingBytes,
+			pars.NewValueResult(matchingRunes[0]),
+			matchingBytes[1:],
+		); msg != "" {
+			t.Fatal(msg)
+		}
 	})
 
 	t.Run("single argument", func(t *testing.T) {
 		t.Run("matching", func(t *testing.T) {
-			e := rune('H')
-			s := pars.FromString("Hello world!")
-			r := pars.Result{}
-
-			require.NoError(t, pars.Rune(e)(s, &r))
-			require.NotEmpty(t, r.Value)
-			assert.Nil(t, r.Token)
-			assert.Equal(t, r.Value, e)
-			assert.Nil(t, r.Children)
+			if msg := matching(
+				pars.Rune(matchingRunes[0]),
+				matchingBytes,
+				pars.NewValueResult(matchingRunes[0]),
+				matchingBytes[1:],
+			); msg != "" {
+				t.Fatal(msg)
+			}
 		})
-
 		t.Run("mismatch", func(t *testing.T) {
-			s := pars.FromString("Hello world!")
-			r := pars.Result{}
-
-			require.Error(t, pars.Rune('h')(s, &r))
-			assert.Nil(t, r.Token)
-			assert.Nil(t, r.Value)
-			assert.Nil(t, r.Children)
+			if msg := mismatch(
+				pars.Rune(mismatchRunes[0]),
+				matchingBytes,
+			); msg != "" {
+				t.Fatal(msg)
+			}
 		})
 	})
 
 	t.Run("many arguments", func(t *testing.T) {
-		t.Run("matching", func(t *testing.T) {
-			e := rune('H')
-			s := pars.FromString("Hello world!")
-			r := pars.Result{}
-
-			require.NoError(t, pars.Rune('h', e)(s, &r))
-			require.NotEmpty(t, r.Value)
-			assert.Nil(t, r.Token)
-			assert.Equal(t, r.Value, e)
-			assert.Nil(t, r.Children)
+		t.Run("matching first", func(t *testing.T) {
+			if msg := matching(
+				pars.Rune(matchingRunes[0], mismatchRunes[0]),
+				matchingBytes,
+				pars.NewValueResult(matchingRunes[0]),
+				matchingBytes[1:],
+			); msg != "" {
+				t.Fatal(msg)
+			}
 		})
-
+		t.Run("matching second", func(t *testing.T) {
+			if msg := matching(
+				pars.Rune(mismatchRunes[0], matchingRunes[0]),
+				matchingBytes,
+				pars.NewValueResult(matchingRunes[0]),
+				matchingBytes[1:],
+			); msg != "" {
+				t.Fatal(msg)
+			}
+		})
 		t.Run("mismatch", func(t *testing.T) {
-			s := pars.FromString("Hello world!")
-			r := pars.Result{}
-
-			assert.Error(t, pars.Rune('h', 'w')(s, &r))
-			assert.Nil(t, r.Token)
-			assert.Nil(t, r.Value)
-			assert.Nil(t, r.Children)
+			if msg := mismatch(
+				pars.Rune(mismatchRunes[0], 'w'),
+				matchingBytes,
+			); msg != "" {
+				t.Fatal(msg)
+			}
 		})
 	})
 }
 
 func BenchmarkRune(b *testing.B) {
-	s := pars.FromString("Hello world!")
+	b.Run("no argument", benchmark(pars.Rune(), matchingBytes))
 
-	b.Run("no argument", func(b *testing.B) {
-		p := pars.Rune()
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push()
-			p(s, pars.Void)
-			s.Pop()
-		}
-	})
+	b.Run("single argument", combineBench(
+		benchCase{"matching", benchmark(pars.Rune(matchingRunes[0]), matchingBytes)},
+		benchCase{"mismatch", benchmark(pars.Rune(mismatchRunes[0]), matchingBytes)},
+	))
 
-	b.Run("single argument", func(b *testing.B) {
-		b.Run("matching", func(b *testing.B) {
-			p := pars.Rune('H')
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				s.Push()
-				p(s, pars.Void)
-				s.Pop()
-			}
-		})
-
-		b.Run("mismatch", func(b *testing.B) {
-			p := pars.Rune('h')
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				s.Push()
-				p(s, pars.Void)
-				s.Pop()
-			}
-		})
-	})
-
-	b.Run("many arguments", func(b *testing.B) {
-		b.Run("matching first", func(b *testing.B) {
-			p := pars.Rune('H', 'h')
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				s.Push()
-				p(s, pars.Void)
-				s.Pop()
-			}
-		})
-
-		b.Run("matching second", func(b *testing.B) {
-			p := pars.Rune('h', 'H')
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				s.Push()
-				p(s, pars.Void)
-				s.Pop()
-			}
-		})
-
-		b.Run("mismatch", func(b *testing.B) {
-			p := pars.Rune('h', 'w')
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				s.Push()
-				p(s, pars.Void)
-				s.Pop()
-			}
-		})
-	})
+	b.Run("many arguments", combineBench(
+		benchCase{"matching first", benchmark(pars.Rune(matchingRunes[0], mismatchRunes[0]), matchingBytes)},
+		benchCase{"matching second", benchmark(pars.Rune(mismatchRunes[0], matchingRunes[0]), matchingBytes)},
+		benchCase{"mismatch", benchmark(pars.Rune(mismatchRunes[0], mismatchRunes[6]), matchingBytes)},
+	))
 }
 
 func TestRuneRange(t *testing.T) {
 	t.Run("matching", func(t *testing.T) {
-		e := rune('H')
-		s := pars.FromString("Hello world!")
-		r := pars.Result{}
-
-		require.NoError(t, pars.RuneRange('A', 'Z')(s, &r))
-		require.NotEmpty(t, r.Value)
-		assert.Nil(t, r.Token)
-		assert.Equal(t, r.Value, e)
-		assert.Nil(t, r.Children)
+		if msg := matching(
+			pars.RuneRange('A', 'Z'),
+			matchingBytes,
+			pars.NewValueResult(matchingRunes[0]),
+			matchingBytes[1:],
+		); msg != "" {
+			t.Fatal(msg)
+		}
 	})
 
 	t.Run("mismatch", func(t *testing.T) {
-		s := pars.FromString("Hello world!")
-		r := pars.Result{}
-
-		require.Error(t, pars.RuneRange('a', 'z')(s, &r))
-		require.Nil(t, r.Token)
-		assert.Nil(t, r.Value)
-		assert.Nil(t, r.Children)
+		if msg := mismatch(
+			pars.RuneRange('a', 'z'),
+			matchingBytes,
+		); msg != "" {
+			t.Fatal(msg)
+		}
 	})
 }
 
 func BenchmarkRangeRune(b *testing.B) {
-	s := pars.FromString("Hello world!")
-
-	b.Run("matching", func(b *testing.B) {
-		p := pars.RuneRange('A', 'Z')
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push()
-			p(s, pars.Void)
-			s.Pop()
-		}
-	})
-
-	b.Run("mismatch", func(b *testing.B) {
-		p := pars.RuneRange('a', 'z')
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push()
-			p(s, pars.Void)
-			s.Pop()
-		}
-	})
+	b.Run("matching", benchmark(pars.RuneRange('A', 'Z'), matchingBytes))
+	b.Run("mismatch", benchmark(pars.RuneRange('a', 'z'), matchingBytes))
 }
 
 func TestRunes(t *testing.T) {
 	t.Run("matching", func(t *testing.T) {
-		e := []rune("Hello")
-		s := pars.FromString("Hello world!")
-		r := pars.Result{}
-
-		require.NoError(t, pars.Runes(e)(s, &r))
-		require.NotEmpty(t, r.Value)
-		assert.Nil(t, r.Token)
-		assert.ElementsMatch(t, r.Value, e)
-		assert.Nil(t, r.Children)
+		if msg := matching(
+			pars.Runes(matchingRunes[:5]),
+			matchingBytes,
+			pars.NewValueResult(matchingRunes[:5]),
+			matchingBytes[5:],
+		); msg != "" {
+			t.Fatal(msg)
+		}
 	})
 
 	t.Run("mismatch", func(t *testing.T) {
-		s := pars.FromString("Hello world!")
-		r := pars.Result{}
-
-		require.Error(t, pars.Runes([]rune("hello"))(s, &r))
-		require.Nil(t, r.Token)
-		assert.Nil(t, r.Value)
-		assert.Nil(t, r.Children)
+		if msg := mismatch(
+			pars.Runes([]rune("matching")),
+			matchingBytes,
+		); msg != "" {
+			t.Fatal(msg)
+		}
 	})
 }
 
 func BenchmarkRunes(b *testing.B) {
-	s := pars.FromString("Hello world!")
-
-	b.Run("matching", func(b *testing.B) {
-		p := pars.Runes([]rune("Hello"))
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push()
-			p(s, pars.Void)
-			s.Pop()
-		}
-	})
-
-	b.Run("mismatch", func(b *testing.B) {
-		p := pars.Runes([]rune("hello"))
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push()
-			p(s, pars.Void)
-			s.Pop()
-		}
-	})
+	b.Run("matching", benchmark(pars.Runes(matchingRunes[:5]), matchingBytes))
+	b.Run("mismatch", benchmark(pars.Runes(mismatchRunes[:5]), matchingBytes))
 }

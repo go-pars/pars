@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-func typeRep(q ParserLike) string {
+func typeRep(q interface{}) string {
 	return reflect.TypeOf(q).String()
 }
 
-func typeReps(qs []ParserLike) []string {
+func typeReps(qs []interface{}) []string {
 	r := make([]string, len(qs))
 	for i, q := range qs {
 		r[i] = typeRep(q)
@@ -18,7 +18,7 @@ func typeReps(qs []ParserLike) []string {
 	return r
 }
 
-func Seq(qs ...ParserLike) Parser {
+func Seq(qs ...interface{}) Parser {
 	ps := AsParsers(qs...)
 	name := fmt.Sprintf("Seq(%s)", strings.Join(typeReps(qs), ", "))
 
@@ -39,7 +39,7 @@ func Seq(qs ...ParserLike) Parser {
 	}
 }
 
-func Any(qs ...ParserLike) Parser {
+func Any(qs ...interface{}) Parser {
 	ps := AsParsers(qs...)
 	name := fmt.Sprintf("Any(%s)", strings.Join(typeReps(qs), ", "))
 
@@ -57,7 +57,7 @@ func Any(qs ...ParserLike) Parser {
 	}
 }
 
-func Maybe(q ParserLike) Parser {
+func Maybe(q interface{}) Parser {
 	p := AsParser(q)
 
 	return func(state *State, result *Result) error {
@@ -72,7 +72,7 @@ func Maybe(q ParserLike) Parser {
 	}
 }
 
-func Many(q ParserLike) Parser {
+func Many(q interface{}) Parser {
 	p := AsParser(q)
 	name := fmt.Sprintf("Many(%s)", typeRep(q))
 
@@ -100,7 +100,7 @@ func Many(q ParserLike) Parser {
 	}
 }
 
-func Count(q ParserLike, n int) Parser {
+func Count(q interface{}, n int) Parser {
 	p := AsParser(q)
 	name := fmt.Sprintf("Count(%s, %d)", typeRep(q), n)
 

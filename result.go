@@ -34,3 +34,36 @@ func (r *Result) SetChildren(c []Result) {
 	r.Value = nil
 	r.Children = c
 }
+
+// NewTokenResult creates a new result with the given token.
+func NewTokenResult(p []byte) *Result { return &Result{Token: p} }
+
+// NewValueResult creates a new result with the given value.
+func NewValueResult(v interface{}) *Result { return &Result{Value: v} }
+
+// NewChildrenResult creates a new result with the given children.
+func NewChildrenResult(c []Result) *Result { return &Result{Children: c} }
+
+// AsResult creates a new result based on the given argument type.
+func AsResult(arg interface{}) *Result {
+	switch v := arg.(type) {
+	case byte:
+		return NewTokenResult([]byte{v})
+	case []byte:
+		return NewTokenResult(v)
+	case []Result:
+		return NewChildrenResult(v)
+	default:
+		return NewValueResult(v)
+	}
+}
+
+// AsResults transforms a given list of arguments into a result with Children
+// with each argument as is result.
+func AsResults(args ...interface{}) *Result {
+	r := make([]Result, len(args))
+	for i, arg := range args {
+		r[i] = *AsResult(arg)
+	}
+	return NewChildrenResult(r)
+}

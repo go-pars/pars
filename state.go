@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -89,6 +90,9 @@ func NewState(r io.Reader) *State {
 
 // FromString creates a new state from the given string.
 func FromString(s string) *State { return NewState(strings.NewReader(s)) }
+
+// FromBytes creates a new state from the given bytes.
+func FromBytes(p []byte) *State { return NewState(bytes.NewBuffer(p)) }
 
 // Read bytes from the state.
 func (s *State) Read(p []byte) (int, error) {

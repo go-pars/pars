@@ -18,12 +18,8 @@ func (p Parser) Map(f Map) Parser {
 	}
 }
 
-// ParserLike is a placeholder for types that can potentially be converted to a
-// Parser with the AsParser function.
-type ParserLike interface{}
-
-// AsParser attempts to create a Parser from a ParserLike object.
-func AsParser(q ParserLike) Parser {
+// AsParser attempts to create a Parser for a given argument.
+func AsParser(q interface{}) Parser {
 	switch p := q.(type) {
 	case Parser:
 		return p
@@ -49,7 +45,7 @@ func AsParser(q ParserLike) Parser {
 }
 
 // AsParsers applies the AsParser function to each argument.
-func AsParsers(qs ...ParserLike) []Parser {
+func AsParsers(qs ...interface{}) []Parser {
 	ps := make([]Parser, len(qs))
 	for i, q := range qs {
 		ps[i] = AsParser(q)
