@@ -29,7 +29,7 @@ func iserror(err error) string {
 	return ""
 }
 
-func equals(exp, act interface{}) string {
+func equals(act, exp interface{}) string {
 	if !reflect.DeepEqual(exp, act) {
 		return fmt.Sprintf("expected: %#v\n  actual: %#v", exp, act)
 	}
