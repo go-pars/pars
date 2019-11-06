@@ -5,14 +5,33 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ktnyt/assert"
 	"github.com/ktnyt/pars"
 )
 
-func assert(condition bool) string {
-	if !condition {
-		return "expected true"
-	}
-	return ""
+func MatchingCase(q interface{}, p []byte, e *pars.Result, n int) assert.F {
+	s := pars.FromBytes(p)
+	r := &pars.Result{}
+	return assert.All(
+		assert.NoError(pars.AsParser(q)(s, r)),
+		assert.Equal(r.Token, e.Token),
+		assert.Equal(r.Value, e.Value),
+		assert.Equal(r.Children, e.Children),
+		assert.Equal(s.Dump(), p[n:]),
+	)
+}
+
+func MismatchCase(q interface{}, p []byte) assert.F {
+	s := pars.FromBytes(p)
+	r := &pars.Result{}
+	e := &pars.Result{}
+	return assert.All(
+		assert.IsError(pars.AsParser(q)(s, r)),
+		assert.Equal(r.Token, e.Token),
+		assert.Equal(r.Value, e.Value),
+		assert.Equal(r.Children, e.Children),
+		assert.Equal(s.Dump(), p),
+	)
 }
 
 func noerror(err error) string {
@@ -44,6 +63,10 @@ func try(msgs ...string) string {
 	}
 	return ""
 }
+
+var hello = "Hello world!"
+var small = "Small world!"
+var goodbye = "Goodbye world!"
 
 var matchingString = "Hello world!"
 var matchingBytes = []byte(matchingString)

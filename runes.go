@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/ktnyt/ascii"
 )
 
 func runeRep(r rune) string {
@@ -15,7 +17,7 @@ func runeRep(r rune) string {
 	}
 	p := make([]byte, 1)
 	utf8.EncodeRune(p, r)
-	return byteRep(p[0])
+	return ascii.Rep(p[0])
 }
 
 func runeReps(p []rune) []string {

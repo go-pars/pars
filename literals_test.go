@@ -4,30 +4,30 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/ktnyt/assert"
 	"github.com/ktnyt/pars"
 )
 
+func MatchingInt(i int) assert.F {
+	s := strconv.Itoa(i)
+	n := len(s)
+	p := []byte(s + " is the answer")
+	e := pars.NewValueResult(i)
+	return MatchingCase(pars.Int, p, e, n)
+}
+
 func TestInt(t *testing.T) {
-	t.Run("matching", func(t *testing.T) {
-		ns := []int{0, 42, -42}
-		for _, n := range ns {
-			e := strconv.Itoa(n)
-			t.Run(e, func(t *testing.T) {
-				p := []byte(e + " is the answer")
-				if msg := matching(
-					pars.Int,
-					p,
-					pars.NewValueResult(n),
-					p[len(e):],
-				); msg != "" {
-					t.Fatal(msg)
-				}
-			})
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching",
+			MatchingInt(0),
+			MatchingInt(42),
+			MatchingInt(-42),
+		),
+		assert.C("mismatch", MismatchCase(pars.Int, []byte(hello))),
+	)
 }
 
 func BenchmarkInt(b *testing.B) {
 	b.Run("matching", benchmark(pars.Int, []byte("42 is the answer")))
-	b.Run("mismatch", benchmark(pars.Int, mismatchBytes))
+	b.Run("mismatch", benchmark(pars.Int, []byte(hello)))
 }

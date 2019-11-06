@@ -4,41 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/ktnyt/ascii"
 )
-
-var byteReptbl = []string{
-	"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
-	"bs", "ht", "nl", "vt", "np", "cr", "so", "si",
-	"dle", "dc1", "dc2", "dc3", "dc4", "nak", "syn", "etb",
-	"can", "em", "sub", "esc", "fs", "gs", "rs", "us",
-	"sp", "!", "\"", "#", "$", "%", "&", "'",
-	"(", ")", "*", "+", " , ", "-", ".", "/",
-	"0", "1", "2", "3", "4", "5", "6", "7",
-	"8", "9", ":", ";", "<", "=", ">", "?",
-	"@", "A", "B", "C", "D", "E", "F", "G",
-	"H", "I", "J", "K", "L", "M", "N", "O",
-	"P", "Q", "R", "S", "T", "U", "V", "W",
-	"X", "Y", "Z", "[", "\\", "]", "^", "_",
-	"`", "a", "b", "c", "d", "e", "f", "g",
-	"h", "i", "j", "k", "l", "m", "n", "o",
-	"p", "q", "r", "s", "t", "u", "v", "w",
-	"x", "y", "z", "{", "|", "}", "~", "del",
-}
-
-func byteRep(c byte) string {
-	if int(c) < len(byteReptbl) {
-		return fmt.Sprintf("`%s`", byteReptbl[int(c)])
-	}
-	return fmt.Sprintf("0x%x", c)
-}
-
-func byteReps(p []byte) []string {
-	r := make([]string, len(p))
-	for i, c := range p {
-		r[i] = byteRep(c)
-	}
-	return r
-}
 
 // Byte will attempt to match the next single byte.
 // If no bytes are given, it will match any byte.
@@ -56,7 +24,7 @@ func Byte(p ...byte) Parser {
 		}
 	case 1:
 		c := p[0]
-		rep := byteRep(c)
+		rep := ascii.Rep(c)
 		name := fmt.Sprintf("Byte(%s)", rep)
 
 		return func(state *State, result *Result) error {
@@ -71,7 +39,7 @@ func Byte(p ...byte) Parser {
 			return nil
 		}
 	default:
-		reps := strings.Join(byteReps(p), ", ")
+		reps := strings.Join(ascii.Reps(p), ", ")
 		name := fmt.Sprintf("Byte(%s)", reps)
 
 		s := string(p)
@@ -106,12 +74,12 @@ func sign(i int) int {
 func ByteRange(begin, end byte) Parser {
 	switch sign(int(end - begin)) {
 	case -1:
-		panic(fmt.Errorf("byte `%s` is greater than `%s`", byteRep(begin), byteRep(end)))
+		panic(fmt.Errorf("byte `%s` is greater than `%s`", ascii.Rep(begin), ascii.Rep(end)))
 	case 0:
 		return Byte(begin)
 	default:
-		name := fmt.Sprintf("ByteRange(%s, %s)", byteRep(begin), byteRep(end))
-		rep := fmt.Sprintf("in range %s-%s", byteRep(begin), byteRep(end))
+		name := fmt.Sprintf("ByteRange(%s, %s)", ascii.Rep(begin), ascii.Rep(end))
+		rep := fmt.Sprintf("in range %s-%s", ascii.Rep(begin), ascii.Rep(end))
 
 		return func(state *State, result *Result) error {
 			if err := state.Want(1); err != nil {
@@ -137,7 +105,7 @@ func Bytes(p []byte) Parser {
 	case 1:
 		return Byte(p[0])
 	default:
-		reps := fmt.Sprintf("[%s]", strings.Join(byteReps(p), ", "))
+		reps := fmt.Sprintf("[%s]", strings.Join(ascii.Reps(p), ", "))
 		name := fmt.Sprintf("Bytes([%s])", reps)
 
 		return func(state *State, result *Result) error {

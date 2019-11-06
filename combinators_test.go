@@ -3,38 +3,29 @@ package pars_test
 import (
 	"testing"
 
+	"github.com/ktnyt/assert"
 	"github.com/ktnyt/pars"
 )
 
 func TestSeq(t *testing.T) {
-	s := matchingString[:5]
+	p0, p1 := []byte(hello), []byte(small)
+	n := 5
+	s := hello[:5]
 	q := make([]interface{}, len(s))
 	for i, c := range s {
 		q[i] = c
 	}
+	p := pars.Seq(q...)
+	e := pars.AsResults(q...)
 
-	t.Run("matching", func(t *testing.T) {
-		if msg := matching(
-			pars.Seq(q...),
-			matchingBytes,
-			pars.AsResults(q...),
-			matchingBytes[5:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.Seq(q...),
-			mismatchBytes,
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching", MatchingCase(p, p0, e, n)),
+		assert.C("mismatch", MismatchCase(p, p1)),
+	)
 }
 
 func BenchmarkSeq(b *testing.B) {
+	p0, p1 := []byte(hello), []byte(small)
 	s := matchingString[:5]
 	q := make([]interface{}, len(s))
 	for i, c := range s {
@@ -42,157 +33,94 @@ func BenchmarkSeq(b *testing.B) {
 	}
 	p := pars.Seq(q...)
 
-	b.Run("matching", benchmark(p, matchingBytes))
-	b.Run("mismatch", benchmark(p, mismatchBytes))
+	b.Run("matching", benchmark(p, p0))
+	b.Run("mismatch", benchmark(p, p1))
 }
 
 func TestAny(t *testing.T) {
-	first := matchingString[:5]
-	second := mismatchString[:7]
+	p0, p1, p2 := []byte(hello), []byte(small), []byte(goodbye)
+	n := 5
+	fst, snd := hello[:n], small[:n]
+	e0, e1 := pars.NewValueResult(fst), pars.NewValueResult(snd)
+	p := pars.Any(fst, snd)
 
-	t.Run("matching first", func(t *testing.T) {
-		if msg := matching(
-			pars.Any(first, second),
-			matchingBytes,
-			pars.NewValueResult(first),
-			matchingBytes[5:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("matching second", func(t *testing.T) {
-		if msg := matching(
-			pars.Any(second, first),
-			matchingBytes,
-			pars.NewValueResult(first),
-			matchingBytes[5:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.Any(first, second),
-			[]byte("hello world!"),
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching first", MatchingCase(p, p0, e0, n)),
+		assert.C("matching second", MatchingCase(p, p1, e1, n)),
+		assert.C("mismatch", MismatchCase(p, p2)),
+	)
 }
 
 func BenchmarkAny(b *testing.B) {
-	first := matchingBytes[:5]
-	second := mismatchBytes[:7]
+	p0, p1, p2 := []byte(hello), []byte(small), []byte(goodbye)
+	n := 5
+	fst, snd := hello[:n], small[:n]
+	p := pars.Any(fst, snd)
 
-	b.Run("matching first", benchmark(pars.Any(first, second), matchingBytes))
-	b.Run("matching second", benchmark(pars.Any(second, first), matchingBytes))
-	b.Run("mismatch", benchmark(pars.Any(first, second), []byte("hello world!")))
+	b.Run("matching first", benchmark(p, p0))
+	b.Run("matching second", benchmark(p, p1))
+	b.Run("mismatch", benchmark(p, p2))
 }
 
 func TestMaybe(t *testing.T) {
-	parser := pars.Maybe(matchingString[:5])
+	p0, p1 := []byte(hello), []byte(small)
+	n := 5
+	p := pars.Maybe(hello[:n])
+	e := pars.NewValueResult(hello[:n])
 
-	t.Run("matching", func(t *testing.T) {
-		if msg := matching(
-			parser,
-			matchingBytes,
-			pars.NewValueResult(matchingString[:5]),
-			matchingBytes[5:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := matching(
-			parser,
-			mismatchBytes,
-			&pars.Result{},
-			mismatchBytes,
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching", MatchingCase(p, p0, e, n)),
+		assert.C("mismatch", MatchingCase(p, p1, &pars.Result{}, 0)),
+	)
 }
 
 func BenchmarkMaybe(b *testing.B) {
-	parser := pars.Maybe(matchingString[:5])
+	p0, p1 := []byte(hello), []byte(small)
+	p := pars.Maybe(hello[:5])
 
-	b.Run("matching", benchmark(parser, matchingBytes))
-	b.Run("mismatch", benchmark(parser, mismatchBytes))
+	b.Run("matching", benchmark(p, p0))
+	b.Run("mismatch", benchmark(p, p1))
 }
 
 func TestMany(t *testing.T) {
-	q := make([]interface{}, len(matchingBytes))
-	for i, c := range matchingBytes {
+	p := []byte(hello)
+	q := make([]interface{}, len(p))
+	for i, c := range p {
 		q[i] = c
 	}
+	n0, n1 := 1, len(p)
+	e0, e1 := pars.AsResults(q[:n0]...), pars.AsResults(q...)
+	p0, p1, p2 := pars.Many(byte('H')), pars.Many(pars.Byte()), pars.Many('h')
 
-	t.Run("matching one", func(t *testing.T) {
-		if msg := matching(
-			pars.Many(pars.ByteRange('A', 'Z')),
-			matchingBytes,
-			pars.AsResults(q[:1]...),
-			matchingBytes[1:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("matching many", func(t *testing.T) {
-		if msg := matching(
-			pars.Many(pars.Byte()),
-			matchingBytes,
-			pars.AsResults(q...),
-			[]byte{},
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.Many(pars.ByteRange('a', 'z')),
-			matchingBytes,
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching one", MatchingCase(p0, p, e0, n0)),
+		assert.C("matching many", MatchingCase(p1, p, e1, n1)),
+		assert.C("mismatch", MismatchCase(p2, p)),
+	)
 }
 
 func BenchmarkMany(b *testing.B) {
-	b.Run("match one", benchmark(pars.Many(pars.ByteRange('A', 'Z')), matchingBytes))
-	b.Run("match many", benchmark(pars.Many(pars.Byte()), matchingBytes))
-	b.Run("mismatch", benchmark(pars.Many(pars.ByteRange('a', 'z')), matchingBytes))
+	p := []byte(hello)
+	p0, p1, p2 := pars.Many(byte('H')), pars.Many(pars.Byte()), pars.Many('h')
+	b.Run("match one", benchmark(p0, p))
+	b.Run("match many", benchmark(p1, p))
+	b.Run("mismatch", benchmark(p2, p))
 }
 
 func TestCount(t *testing.T) {
-	q := make([]interface{}, len(matchingString))
-	for i, c := range matchingString {
+	p0, p1 := []byte(goodbye), []byte(hello)
+	r := []rune(goodbye)
+	q := make([]interface{}, len(r))
+	for i, c := range r {
 		q[i] = c
 	}
+	e := pars.AsResults(q...)
+	p := pars.Count(pars.Rune(), len(r))
 
-	t.Run("matching", func(t *testing.T) {
-		if msg := matching(
-			pars.Count(pars.Rune(), len(matchingBytes)),
-			matchingBytes,
-			pars.AsResults(q...),
-			[]byte{},
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
-
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.Count(pars.Rune(), len(matchingBytes)),
-			matchingBytes[:5],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching", MatchingCase(p, p0, e, len(p0))),
+		assert.C("mismatch", MismatchCase(p, p1)),
+	)
 }
 
 func BenchmarkCount(b *testing.B) {

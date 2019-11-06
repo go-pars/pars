@@ -87,7 +87,11 @@ func Many(q interface{}) Parser {
 		state.Drop()
 
 		state.Push()
+		before := state.Position()
 		for p(state, result) == nil {
+			if state.Position() == before {
+				return nil
+			}
 			state.Drop()
 			state.Push()
 			v = append(v, *result)

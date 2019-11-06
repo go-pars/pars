@@ -20,7 +20,7 @@ func Head(state *State, result *Result) error {
 
 // EOF matches if the state has reached the end of the io.Reader.
 func EOF(state *State, result *Result) error {
-	if !state.isEOF {
+	if !state.IsEOF() {
 		return NewParserError("state is not at EOF", state.Position())
 	}
 	return nil

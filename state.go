@@ -148,6 +148,7 @@ func (s *State) Want(n int) error {
 
 		// Still not enough bytes.
 		if m < n {
+			s.isEOF = true
 			s.wanted = m
 			return io.EOF
 		}
@@ -157,13 +158,34 @@ func (s *State) Want(n int) error {
 	return nil
 }
 
+// Advance the index by the amount given in a previous Want call.
+func (s *State) Advance() {
+	if s.wanted == 0 {
+		panic("no previous call to Want")
+	}
+	for _, b := range s.buffer[s.index : s.index+s.wanted] {
+		if b == '\n' {
+			s.position.Line++
+			s.position.Byte = 0
+		} else {
+			s.position.Byte++
+		}
+	}
+	s.index += s.wanted
+	s.wanted = 0
+	s.autoclear()
+}
+
 // Skip the state for the given number of bytes.
 func (s *State) Skip(n int) error {
-	if err := s.Want(n); err != nil {
-		return err
-	}
+	err := s.Want(n)
 	s.Advance()
-	return nil
+	return err
+}
+
+// IsEOF checks the state if it is at the end of the buffer.
+func (s State) IsEOF() bool {
+	return s.isEOF && s.index == len(s.buffer)
 }
 
 // Head returns the first byte in the buffer.
@@ -177,25 +199,6 @@ func (s State) Buffer() []byte { return s.buffer[s.index : s.index+s.wanted] }
 
 // Dump returns the entire remaining buffer content.
 func (s State) Dump() []byte { return s.buffer[s.index:] }
-
-// Advance the index by the amount given in a previous Want call.
-func (s *State) Advance() {
-	n := s.wanted
-	if n == 0 {
-		panic("no previous call to Want")
-	}
-	for _, b := range s.buffer[s.index : s.index+n] {
-		if b == '\n' {
-			s.position.Line++
-			s.position.Byte = 0
-		} else {
-			s.position.Byte++
-		}
-	}
-	s.index += n
-	s.wanted = 0
-	s.autoclear()
-}
 
 // Position returns the current position of the state.
 func (s State) Position() Position { return s.position }

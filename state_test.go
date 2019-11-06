@@ -4,100 +4,76 @@ import (
 	"io"
 	"testing"
 
+	"github.com/ktnyt/assert"
 	"github.com/ktnyt/pars"
 )
 
 func TestState(t *testing.T) {
-	t.Run("Read", func(t *testing.T) {
-		s := pars.FromBytes(matchingBytes)
-		p := make([]byte, len(matchingBytes))
-		n, err := s.Read(p)
+	p := []byte(hello)
 
-		if msg := equals(n, len(matchingBytes)); msg != "" {
-			t.Fatal(msg)
-		}
-		if msg := noerror(err); msg != "" {
-			t.Fatal(msg)
-		}
-		if msg := equals(p, matchingBytes); msg != "" {
-			t.Fatal(msg)
-		}
-		if msg := equals(s.Dump(), []byte{}); msg != "" {
-			t.Fatal(msg)
-		}
+	t.Run("Read", func(t *testing.T) {
+		s := pars.FromBytes(p)
+		q := make([]byte, len(p))
+		n, err := s.Read(q)
+
+		assert.Apply(t,
+			assert.NoError(err),
+			assert.Equal(n, len(q)),
+			assert.Equal(q, p),
+			assert.Equal(s.Dump(), []byte{}),
+		)
 	})
 
 	t.Run("Want", func(t *testing.T) {
-		s := pars.FromBytes(matchingBytes)
-
-		if msg := noerror(s.Want(len(matchingBytes))); msg != "" {
-			t.Fatal(msg)
-		}
-		if msg := equals(s.Want(len(matchingBytes)+1), io.EOF); msg != "" {
-			t.Fatal(msg)
-		}
+		s := pars.FromBytes(p)
+		assert.Apply(t,
+			assert.NoError(s.Want(len(p))),
+			assert.Equal(s.Want(len(p)+1), io.EOF),
+		)
 	})
 
 	t.Run("Advance", func(t *testing.T) {
-		s := pars.FromBytes(matchingBytes)
+		s := pars.FromBytes(p)
+		advance := func() { s.Advance() }
 
-		if msg := noerror(s.Want(1)); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Advance()
-		if msg := equals(s.Dump(), matchingBytes[1:]); msg != "" {
-			t.Fatal(msg)
-		}
-
-		if msg := noerror(s.Want(5)); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Advance()
-		if msg := equals(s.Dump(), matchingBytes[6:]); msg != "" {
-			t.Fatal(msg)
-		}
+		assert.Apply(t,
+			assert.NoError(s.Want(1)),
+			assert.Eval(advance),
+			assert.Equal(s.Dump(), p[1:]),
+			assert.NoError(s.Want(5)),
+			assert.Eval(advance),
+			assert.Equal(s.Dump(), p[6:]),
+		)
 	})
 
 	t.Run("Stack", func(t *testing.T) {
-		s := pars.FromBytes(matchingBytes)
+		s := pars.FromBytes(p)
+		push := func() { s.Push() }
+		pop := func() { s.Pop() }
+		drop := func() { s.Drop() }
 
-		s.Push()
-		if msg := noerror(s.Want(1)); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Advance()
-		if msg := equals(s.Dump(), matchingBytes[1:]); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Push()
-		if msg := noerror(s.Want(5)); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Advance()
-		if msg := equals(s.Dump(), matchingBytes[6:]); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Pop()
-		if msg := equals(s.Dump(), matchingBytes[1:]); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Pop()
-		if msg := equals(s.Dump(), matchingBytes); msg != "" {
-			t.Fatal(msg)
-		}
+		assert.Apply(t,
+			assert.Eval(push),
+			assert.NoError(s.Skip(1)),
+			assert.Equal(s.Dump(), p[1:]),
 
-		s.Push()
-		if msg := noerror(s.Want(6)); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Advance()
-		if msg := equals(s.Dump(), matchingBytes[6:]); msg != "" {
-			t.Fatal(msg)
-		}
-		s.Drop()
-		if msg := equals(s.Dump(), matchingBytes[6:]); msg != "" {
-			t.Fatal(msg)
-		}
+			assert.Eval(push),
+			assert.NoError(s.Skip(5)),
+			assert.Equal(s.Dump(), p[6:]),
+
+			assert.Eval(pop),
+			assert.Equal(s.Dump(), p[1:]),
+
+			assert.Eval(pop),
+			assert.Equal(s.Dump(), p),
+
+			assert.Eval(push),
+			assert.NoError(s.Skip(6)),
+			assert.Equal(s.Dump(), p[6:]),
+
+			assert.Eval(drop),
+			assert.Equal(s.Dump(), p[6:]),
+		)
 	})
 }
 

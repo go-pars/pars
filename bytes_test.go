@@ -3,142 +3,76 @@ package pars_test
 import (
 	"testing"
 
+	"github.com/ktnyt/assert"
 	"github.com/ktnyt/pars"
 )
 
 func TestByte(t *testing.T) {
-	t.Run("no argument", func(t *testing.T) {
-		if msg := matching(
-			pars.Byte(),
-			matchingBytes,
-			pars.NewTokenResult(matchingBytes[:1]),
-			matchingBytes[1:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	p := []byte(hello)
+	n := 1
+	e := pars.NewTokenResult(p[:n])
 
-	t.Run("single argument", func(t *testing.T) {
-		t.Run("matching", func(t *testing.T) {
-			if msg := matching(
-				pars.Byte(matchingBytes[0]),
-				matchingBytes,
-				pars.NewTokenResult(matchingBytes[:1]),
-				matchingBytes[1:],
-			); msg != "" {
-				t.Fatal(msg)
-			}
-		})
-
-		t.Run("mismatch", func(t *testing.T) {
-			if msg := mismatch(
-				pars.Byte(mismatchBytes[0]),
-				matchingBytes,
-			); msg != "" {
-				t.Fatal(msg)
-			}
-		})
-	})
-
-	t.Run("multiple argument", func(t *testing.T) {
-		t.Run("matching first", func(t *testing.T) {
-			if msg := matching(
-				pars.Byte(matchingBytes[0], mismatchBytes[0]),
-				matchingBytes,
-				pars.NewTokenResult(matchingBytes[:1]),
-				matchingBytes[1:],
-			); msg != "" {
-				t.Fatal(msg)
-			}
-		})
-
-		t.Run("matching second", func(t *testing.T) {
-			if msg := matching(
-				pars.Byte(mismatchBytes[0], matchingBytes[0]),
-				matchingBytes,
-				pars.NewTokenResult(matchingBytes[:1]),
-				matchingBytes[1:],
-			); msg != "" {
-				t.Fatal(msg)
-			}
-		})
-
-		t.Run("mismatch", func(t *testing.T) {
-			if msg := mismatch(
-				pars.Byte(mismatchBytes[0], mismatchBytes[6]),
-				matchingBytes,
-			); msg != "" {
-				t.Fatal(msg)
-			}
-		})
-	})
+	assert.Apply(t,
+		assert.C("no argument", MatchingCase(pars.Byte(), p, e, n)),
+		assert.C("single argument",
+			assert.C("matching", MatchingCase(pars.Byte('H'), p, e, n)),
+			assert.C("mismatch", MismatchCase(pars.Byte('h'), p)),
+		),
+		assert.C("multiple arguments",
+			assert.C("match first", MatchingCase(pars.Byte('H', 'h'), p, e, n)),
+			assert.C("match second", MatchingCase(pars.Byte('h', 'H'), p, e, n)),
+			assert.C("mismatch", MismatchCase(pars.Byte('h', 'w'), p)),
+		),
+	)
 }
 
 func BenchmarkByte(b *testing.B) {
-	b.Run("no argument", benchmark(pars.Byte(), matchingBytes))
+	p0, p1 := []byte(hello), []byte(small)
+
+	b.Run("no argument", benchmark(pars.Byte(), p0))
 
 	b.Run("single argument", combineBench(
-		benchCase{"matching", benchmark(pars.Byte(matchingBytes[0]), matchingBytes)},
-		benchCase{"mismatch", benchmark(pars.Byte(mismatchBytes[0]), matchingBytes)},
+		benchCase{"matching", benchmark(pars.Byte(p0[0]), p0)},
+		benchCase{"mismatch", benchmark(pars.Byte(p0[0]), p1)},
 	))
 
 	b.Run("many arguments", combineBench(
-		benchCase{"matching first", benchmark(pars.Byte(matchingBytes[0], mismatchBytes[0]), matchingBytes)},
-		benchCase{"matching second", benchmark(pars.Byte(mismatchBytes[0], matchingBytes[0]), matchingBytes)},
-		benchCase{"mismatch", benchmark(pars.Byte(mismatchBytes[0]), matchingBytes)},
+		benchCase{"matching first", benchmark(pars.Byte(p0[0], p1[0]), p0)},
+		benchCase{"matching second", benchmark(pars.Byte(p1[0], p0[0]), p0)},
+		benchCase{"mismatch", benchmark(pars.Byte(p0[0]), p1)},
 	))
 }
 
 func TestByteRange(t *testing.T) {
-	t.Run("matching", func(t *testing.T) {
-		if msg := matching(
-			pars.ByteRange('A', 'Z'),
-			matchingBytes,
-			pars.NewTokenResult(matchingBytes[:1]),
-			matchingBytes[1:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	p := []byte(hello)
+	n := 1
+	e := pars.NewTokenResult(p[:n])
 
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.ByteRange('a', 'z'),
-			matchingBytes,
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching", MatchingCase(pars.ByteRange('A', 'Z'), p, e, n)),
+		assert.C("mismatch", MismatchCase(pars.ByteRange('a', 'z'), p)),
+	)
 }
 
 func BenchmarkRangeByte(b *testing.B) {
-	b.Run("matching", benchmark(pars.ByteRange('A', 'Z'), matchingBytes))
-	b.Run("mismatch", benchmark(pars.ByteRange('a', 'z'), matchingBytes))
+	p := []byte(hello)
+	b.Run("matching", benchmark(pars.ByteRange('A', 'Z'), p))
+	b.Run("mismatch", benchmark(pars.ByteRange('a', 'z'), p))
 }
 
 func TestBytes(t *testing.T) {
-	t.Run("matching", func(t *testing.T) {
-		if msg := matching(
-			pars.Bytes(matchingBytes[:5]),
-			matchingBytes,
-			pars.NewTokenResult(matchingBytes[:5]),
-			matchingBytes[5:],
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	p := []byte(hello)
+	n := 5
+	e := pars.NewTokenResult(p[:n])
 
-	t.Run("mismatch", func(t *testing.T) {
-		if msg := mismatch(
-			pars.Bytes([]byte("matching")),
-			matchingBytes,
-		); msg != "" {
-			t.Fatal(msg)
-		}
-	})
+	assert.Apply(t,
+		assert.C("matching", MatchingCase(pars.Bytes(p[:n]), p, e, n)),
+		assert.C("mismatch", MismatchCase(pars.Bytes(p[n:]), p)),
+	)
 }
 
 func BenchmarkBytes(b *testing.B) {
-	b.Run("matching", benchmark(pars.Bytes(matchingBytes[:5]), matchingBytes))
-	b.Run("mismatch", benchmark(pars.Bytes([]byte("matching")), matchingBytes))
+	p0, p1 := []byte(hello), []byte(small)
+	b.Run("matching", benchmark(pars.Bytes(p0[:5]), p0))
+	b.Run("mismatch", benchmark(pars.Bytes(p0[:5]), p1))
 }
