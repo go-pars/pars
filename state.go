@@ -105,6 +105,10 @@ func (s *State) Read(p []byte) (int, error) {
 
 	// Check for the number of bytes left in the buffer.
 	n := len(s.buffer)
+	if n == 0 {
+		return 0, io.EOF
+	}
+
 	if n < l {
 		l = n
 	}
@@ -150,6 +154,15 @@ func (s *State) Want(n int) error {
 	}
 
 	s.wanted = n
+	return nil
+}
+
+// Skip the state for the given number of bytes.
+func (s *State) Skip(n int) error {
+	if err := s.Want(n); err != nil {
+		return err
+	}
+	s.Advance()
 	return nil
 }
 
