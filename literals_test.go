@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ktnyt/assert"
+	"github.com/ktnyt/bench"
 	"github.com/ktnyt/pars"
 )
 
@@ -44,7 +45,7 @@ func BenchmarkInt(b *testing.B) {
 }
 
 func TestNumber(t *testing.T) {
-	validTests := []string{
+	validValues := []string{
 		"0",
 		"-0",
 		"1",
@@ -93,7 +94,7 @@ func TestNumber(t *testing.T) {
 		"-0e-34",
 	}
 
-	invalidTests := []string{
+	invalidValues := []string{
 		"",
 		"invalid",
 		"1.0.1",
@@ -117,18 +118,38 @@ func TestNumber(t *testing.T) {
 		"1.e1",
 	}
 
-	validCases := make([]assert.F, len(validTests))
-	for i, s := range validTests {
+	validCases := make([]assert.F, len(validValues))
+	for i, s := range validValues {
 		validCases[i] = assert.C(s, MatchingNumber(s))
 	}
 
-	invalidCases := make([]assert.F, len(invalidTests))
-	for i, s := range invalidTests {
+	invalidCases := make([]assert.F, len(invalidValues))
+	for i, s := range invalidValues {
 		invalidCases[i] = assert.C(s, MismatchCase(pars.Exact(pars.Number), []byte(s)))
 	}
 
 	assert.Apply(t,
 		assert.C("matching", validCases...),
 		assert.C("mismatch", invalidCases...),
+	)
+}
+
+func BenchmarkNumber(b *testing.B) {
+	validValues := []string{
+		"0",
+		"1",
+		"0.1",
+		"1234",
+		"12.34",
+		"-61657.61667E+61673",
+	}
+
+	validCases := make([]bench.F, len(validValues))
+	for i, s := range validValues {
+		validCases[i] = bench.C(s, benchmark(pars.Number, []byte(s)))
+	}
+
+	bench.Apply(b,
+		bench.C("matching", validCases...),
 	)
 }
