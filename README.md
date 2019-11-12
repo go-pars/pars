@@ -281,11 +281,10 @@ JSON parser included in the examples directory.
 | state.go       | Parser state definition and implementation.  |
 | result.go      | Parser result definition and implementation. |
 | basic.go       | Basic parsers for used combining.            |
-| bytes.go       | Parsers for mathing byte patterns.           |
-| runes.go       | Parsers for mathing rune patterns.           |
-| strings.go     | Parsers for mathing string patterns.         |
+| bytes.go       | Parsers for matching byte patterns.          |
+| runes.go       | Parsers for matching rune patterns.          |
+| strings.go     | Parsers for matching string patterns.        |
 | combinators.go | Core combinator definitions.                 |
-| characters.go  | Parsers for matching common character sets.  |
+| composite.go   | Additional composite combinators.            |
 | literals.go    | Parsers for various literal values.          |
-| auxiliary.go   | Optimized common use combinators.            |
 | mappings.go    | Utilities for common result mappings.        |
