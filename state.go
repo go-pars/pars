@@ -2,89 +2,36 @@ package pars
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"io"
 	"strings"
 )
 
-func notEOF(err error) bool { return err != nil && err != io.EOF }
-
 const (
-	stackGrowthSize = 16
-	bufferReadSize  = 4096
+	bufferReadSize = 4096
 )
 
-// Position represents the line and byte numbers.
-type Position struct {
-	Line int
-	Byte int
-}
-
-func (p Position) Head() bool {
-	return p.Line == 0 && p.Byte == 0
-}
-
-func (p Position) String() string {
-	return fmt.Sprintf("line %d byte %d", p.Line+1, p.Byte+1)
-}
-
-type frame struct {
-	Index    int
-	Position Position
-}
-
-type stack struct {
-	frames []frame
-	index  int
-}
-
-func newStack() *stack { return &stack{make([]frame, stackGrowthSize), 0} }
-
-func (s stack) Len() int { return s.index }
-
-func (s *stack) Push(index int, position Position) {
-	if len(s.frames) == s.index {
-		s.frames = append(s.frames, make([]frame, stackGrowthSize)...)
-	}
-	s.frames[s.index] = frame{index, position}
-	s.index++
-}
-
-func (s *stack) Pop() (int, Position) {
-	if s.index == 0 {
-		panic("Pop called on empty stack")
-	}
-	s.index--
-	f := s.frames[s.index]
-	return f.Index, f.Position
-}
-
-func (s *stack) Clear() {
-	s.index = 0
-}
-
-// State represents the parser state.
+// State represents a parser state, which is a convenience wrapper for an
+// io.Reader object with buffering and backtracking.
 type State struct {
-	reader   io.Reader
-	buffer   []byte
-	index    int
-	isEOF    bool
-	wanted   int
-	position Position
-	frames   *stack
+	rd  io.Reader
+	buf []byte
+	off int
+	err error
+	req int
+	pos Position
+	stk *stack
 }
 
 // NewState creates a new state from the given io.Reader.
 func NewState(r io.Reader) *State {
 	return &State{
-		reader:   r,
-		buffer:   make([]byte, 0),
-		index:    0,
-		isEOF:    false,
-		wanted:   0,
-		position: Position{0, 0},
-		frames:   newStack(),
+		rd:  r,
+		buf: make([]byte, 0),
+		off: 0,
+		err: nil,
+		req: -1,
+		pos: Position{0, 0},
+		stk: newStack(),
 	}
 }
 
@@ -94,140 +41,128 @@ func FromString(s string) *State { return NewState(strings.NewReader(s)) }
 // FromBytes creates a new state from the given bytes.
 func FromBytes(p []byte) *State { return NewState(bytes.NewBuffer(p)) }
 
-// Read bytes from the state.
+// Read satisfies the io.Reader interface.
 func (s *State) Read(p []byte) (int, error) {
-	l := len(p)
-
-	// Attempt to read full length of p.
-	if err := s.Want(l); notEOF(err) {
-		return 0, err
-	}
-
-	// Check for the number of bytes left in the buffer.
-	n := len(s.buffer)
-	if n == 0 {
-		return 0, io.EOF
-	}
-
-	if n < l {
-		l = n
-	}
-
-	copy(p, s.buffer)
+	err := s.Request(len(p))
+	n := copy(p, s.buf)
 	s.Advance()
-	return n, nil
-}
-
-func (s *State) fill() (int, error) {
-	p := make([]byte, bufferReadSize)
-	n, err := s.reader.Read(p)
-	if n > 0 || err == nil {
-		s.buffer = append(s.buffer, p[:n]...)
-	}
 	return n, err
 }
 
-// Want queries the state for the number of bytes wanted.
-// If there are not enough bytes in the buffer, additional bytes are read
-// from the io.Reader.
-func (s *State) Want(n int) error {
+// Request checks if the state contains at least the given number of bytes,
+// additionally reading from the io.Reader object as necessary when the
+// internal buffer is exhausted. If the call to Read for the io.Reader object
+// returns an error, Request will return the corresponding error.
+func (s *State) Request(n int) error {
 	// There are not enough bytes left in the buffer.
-	if s.index+n > len(s.buffer) {
-		// The io.Reader already reached EOF.
-		if s.isEOF {
-			return io.EOF
+	if len(s.buf) < s.off+n {
+		// The io.Reader object previously returned an error.
+		if s.err != nil {
+			return s.err
 		}
 
 		// Read the next block of bytes.
-		m, err := s.fill()
-		if err == io.EOF {
-			s.isEOF = true
-		} else if err != nil {
-			return err
+		p := make([]byte, len(s.buf)+bufferReadSize)
+		l := copy(p, s.buf)
+		m, err := s.rd.Read(p[l:])
+		s.buf = p[:l+m]
+		if err != nil {
+			s.err = err
 		}
 
 		// Still not enough bytes.
-		if m < n {
-			s.isEOF = true
-			s.wanted = m
-			return io.EOF
+		if len(s.buf) < s.off+n {
+			s.req = m
+			if s.err == nil {
+				s.err = io.EOF
+			}
+			return s.err
 		}
 	}
 
-	s.wanted = n
+	s.req = n
 	return nil
 }
 
-// Advance the index by the amount given in a previous Want call.
+// Advance the state by the amount given in a previous Request call.
 func (s *State) Advance() {
-	if s.wanted == 0 {
-		panic("no previous call to Want")
+	if s.req == -1 {
+		panic("no previous call to Request")
 	}
-	for _, b := range s.buffer[s.index : s.index+s.wanted] {
+	for _, b := range s.buf[s.off : s.off+s.req] {
 		if b == '\n' {
-			s.position.Line++
-			s.position.Byte = 0
+			s.pos.Line++
+			s.pos.Byte = 0
 		} else {
-			s.position.Byte++
+			s.pos.Byte++
 		}
 	}
-	s.index += s.wanted
-	s.wanted = 0
+	s.off += s.req
+	s.req = -1
 	s.autoclear()
 }
 
-// Skip the state for the given number of bytes.
-func (s *State) Skip(n int) error {
-	err := s.Want(n)
-	s.Advance()
-	return err
-}
+// Buffer returns the range of bytes guaranteed by a Request call.
+func (s State) Buffer() []byte { return s.buf[s.off : s.off+s.req] }
 
-// IsEOF checks the state if it is at the end of the buffer.
-func (s State) IsEOF() bool {
-	return s.isEOF && s.index == len(s.buffer)
-}
+// Dump returns the entire remaining buffer content. Note that the returned
+// byte slice will not always contain the entirety of the bytes that can be
+// read by the io.Reader object.
+func (s State) Dump() []byte { return s.buf[s.off:] }
 
-// Head returns the first byte in the buffer.
-func (s State) Head() byte { return s.buffer[s.index] }
+// Offset returns the current state offset.
+func (s State) Offset() int { return s.off }
 
-// Is checks if the head is the given byte.
-func (s State) Is(c byte) bool { return s.buffer[s.index] == c }
+// Position returns the current line and byte position of the state.
+func (s State) Position() Position { return s.pos }
 
-// Buffer returns the byte slice which is accessible to the user.
-func (s State) Buffer() []byte { return s.buffer[s.index : s.index+s.wanted] }
+// Push the current state position for backtracking.
+func (s *State) Push() { s.stk.Push(s.off, s.pos) }
 
-// Dump returns the entire remaining buffer content.
-func (s State) Dump() []byte { return s.buffer[s.index:] }
+// Pushed tests if the state has been pushed at least once.
+func (s State) Pushed() bool { return !s.stk.Empty() }
 
-// Position returns the current position of the state.
-func (s State) Position() Position { return s.position }
-
-// Push the current state frame into the internal stack.
-func (s *State) Push() { s.frames.Push(s.index, s.position) }
-
-// Pop the latest frame from the internal stack.
-func (s *State) Pop() error {
-	if s.frames.Len() == 0 {
-		return errors.New("state stack empty")
+// Pop will backtrack to the most recently pushed state.
+func (s *State) Pop() {
+	if !s.stk.Empty() {
+		s.off, s.pos = s.stk.Pop()
+		s.autoclear()
 	}
-	s.index, s.position = s.frames.Pop()
-	s.autoclear()
-	return nil
 }
 
-// Drop the latest frame from the internal stack.
-func (s *State) Drop() { s.frames.Pop(); s.autoclear() }
+// Drop will discard the most recently pushed state.
+func (s *State) Drop() {
+	if !s.stk.Empty() {
+		s.stk.Pop()
+		s.autoclear()
+	}
+}
 
 func (s *State) autoclear() {
-	if s.frames.Len() == 0 {
+	if s.stk.Empty() {
 		s.Clear()
 	}
 }
 
-// Clear the state buffer and index.
+// Clear will discard the buffer contents prior to the current state offset
+// and drop all pushed states.
 func (s *State) Clear() {
-	s.buffer = s.buffer[s.index:]
-	s.index = 0
-	s.frames.Clear()
+	s.buf = s.buf[s.off:]
+	s.off = 0
+	s.stk.Reset()
+}
+
+// Skip the given state for the given number of bytes.
+func Skip(state *State, n int) error {
+	err := state.Request(n)
+	state.Advance()
+	return err
+}
+
+// Next attempts to retrieve the next byte in the given state.
+func Next(state *State) (byte, error) {
+	if err := state.Request(1); err != nil {
+		return 0, err
+	}
+	return state.Buffer()[0], nil
 }

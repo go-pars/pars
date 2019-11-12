@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ktnyt/assert"
+	"github.com/ktnyt/bench"
 	"github.com/ktnyt/pars"
 )
 
@@ -98,28 +99,13 @@ func mismatch(p pars.Parser, in []byte) string {
 	)
 }
 
-type benchFunc func(*testing.B)
-
-type benchCase struct {
-	Name string
-	Func benchFunc
-}
-
-func benchmark(p pars.Parser, in []byte) benchFunc {
+func benchmark(p pars.Parser, in []byte) bench.F {
 	s := pars.FromBytes(in)
 	return func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			s.Push()
 			p(s, pars.Void)
 			s.Pop()
-		}
-	}
-}
-
-func combineBench(cases ...benchCase) benchFunc {
-	return func(b *testing.B) {
-		for _, bc := range cases {
-			b.Run(bc.Name, bc.Func)
 		}
 	}
 }

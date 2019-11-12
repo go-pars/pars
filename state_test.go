@@ -24,11 +24,11 @@ func TestState(t *testing.T) {
 		)
 	})
 
-	t.Run("Want", func(t *testing.T) {
+	t.Run("Request", func(t *testing.T) {
 		s := pars.FromBytes(p)
 		assert.Apply(t,
-			assert.NoError(s.Want(len(p))),
-			assert.Equal(s.Want(len(p)+1), io.EOF),
+			assert.NoError(s.Request(len(p))),
+			assert.Equal(s.Request(len(p)+1), io.EOF),
 		)
 	})
 
@@ -37,10 +37,10 @@ func TestState(t *testing.T) {
 		advance := func() { s.Advance() }
 
 		assert.Apply(t,
-			assert.NoError(s.Want(1)),
+			assert.NoError(s.Request(1)),
 			assert.Eval(advance),
 			assert.Equal(s.Dump(), p[1:]),
-			assert.NoError(s.Want(5)),
+			assert.NoError(s.Request(5)),
 			assert.Eval(advance),
 			assert.Equal(s.Dump(), p[6:]),
 		)
@@ -54,11 +54,11 @@ func TestState(t *testing.T) {
 
 		assert.Apply(t,
 			assert.Eval(push),
-			assert.NoError(s.Skip(1)),
+			assert.NoError(pars.Skip(s,1)),
 			assert.Equal(s.Dump(), p[1:]),
 
 			assert.Eval(push),
-			assert.NoError(s.Skip(5)),
+			assert.NoError(pars.Skip(s,5)),
 			assert.Equal(s.Dump(), p[6:]),
 
 			assert.Eval(pop),
@@ -68,7 +68,7 @@ func TestState(t *testing.T) {
 			assert.Equal(s.Dump(), p),
 
 			assert.Eval(push),
-			assert.NoError(s.Skip(6)),
+			assert.NoError(pars.Skip(s,6)),
 			assert.Equal(s.Dump(), p[6:]),
 
 			assert.Eval(drop),

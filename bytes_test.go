@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ktnyt/assert"
+	"github.com/ktnyt/bench"
 	"github.com/ktnyt/pars"
 )
 
@@ -29,18 +30,19 @@ func TestByte(t *testing.T) {
 func BenchmarkByte(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
 
-	b.Run("no argument", benchmark(pars.Byte(), p0))
+	bench.Apply(b,
+		bench.C("no argument", benchmark(pars.Byte(), p0)),
+		bench.C("single argument",
+			bench.C("matching", benchmark(pars.Byte(p0[0]), p0)),
+			bench.C("mismatch", benchmark(pars.Byte(p0[0]), p1)),
+		),
+		bench.C("many arguments",
+			bench.C("matching first", benchmark(pars.Byte(p0[0], p1[0]), p0)),
+			bench.C("matching second", benchmark(pars.Byte(p1[0], p0[0]), p0)),
+			bench.C("mismatch", benchmark(pars.Byte(p0[0]), p1)),
+		),
+	)
 
-	b.Run("single argument", combineBench(
-		benchCase{"matching", benchmark(pars.Byte(p0[0]), p0)},
-		benchCase{"mismatch", benchmark(pars.Byte(p0[0]), p1)},
-	))
-
-	b.Run("many arguments", combineBench(
-		benchCase{"matching first", benchmark(pars.Byte(p0[0], p1[0]), p0)},
-		benchCase{"matching second", benchmark(pars.Byte(p1[0], p0[0]), p0)},
-		benchCase{"mismatch", benchmark(pars.Byte(p0[0]), p1)},
-	))
 }
 
 func TestByteRange(t *testing.T) {
@@ -56,8 +58,10 @@ func TestByteRange(t *testing.T) {
 
 func BenchmarkRangeByte(b *testing.B) {
 	p := []byte(hello)
-	b.Run("matching", benchmark(pars.ByteRange('A', 'Z'), p))
-	b.Run("mismatch", benchmark(pars.ByteRange('a', 'z'), p))
+	bench.Apply(b,
+		bench.C("matching", benchmark(pars.ByteRange('A', 'Z'), p)),
+		bench.C("mismatch", benchmark(pars.ByteRange('a', 'z'), p)),
+	)
 }
 
 func TestBytes(t *testing.T) {
@@ -73,6 +77,8 @@ func TestBytes(t *testing.T) {
 
 func BenchmarkBytes(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
-	b.Run("matching", benchmark(pars.Bytes(p0[:5]), p0))
-	b.Run("mismatch", benchmark(pars.Bytes(p0[:5]), p1))
+	bench.Apply(b,
+		bench.C("matching", benchmark(pars.Bytes(p0[:5]), p0)),
+		bench.C("mismatch", benchmark(pars.Bytes(p0[:5]), p1)),
+	)
 }

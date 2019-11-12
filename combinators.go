@@ -1,125 +1,86 @@
 package pars
 
-import (
-	"fmt"
-	"reflect"
-	"strings"
-)
-
-func typeRep(q interface{}) string {
-	return reflect.TypeOf(q).String()
-}
-
-func typeReps(qs []interface{}) []string {
-	r := make([]string, len(qs))
-	for i, q := range qs {
-		r[i] = typeRep(q)
-	}
-	return r
-}
-
+// Seq creates a Parser which will attempt to match all of the given Parsers
+// in the given order. If any of the given Parsers fail to match, the state
+// will attempt to backtrack to the position before any of the given Parsers
+// were applied.
 func Seq(qs ...interface{}) Parser {
 	ps := AsParsers(qs...)
-	name := fmt.Sprintf("Seq(%s)", strings.Join(typeReps(qs), ", "))
 
 	return func(state *State, result *Result) error {
 		v := make([]Result, len(ps))
-
 		state.Push()
 		for i, p := range ps {
 			if err := p(state, &v[i]); err != nil {
 				state.Pop()
-				return NewTraceError(name, err)
+				return err
 			}
 		}
 		state.Drop()
-
 		result.SetChildren(v)
 		return nil
 	}
 }
 
+// Any creates a Parser which will attempt to match any of the given Parsers.
+// If all of the given Parsers fail to match, the state will attempt to
+// backtrack to the position before any of the given Parsers were applied. An
+// error from the parser will be returned immediately if the state cannot be
+// backtracked. Otherwise, the error from the last Parser will be returned.
 func Any(qs ...interface{}) Parser {
 	ps := AsParsers(qs...)
-	name := fmt.Sprintf("Any(%s)", strings.Join(typeReps(qs), ", "))
 
-	return func(state *State, result *Result) error {
+	return func(state *State, result *Result) (err error) {
 		state.Push()
 		for _, p := range ps {
-			if p(state, result) == nil {
+			if err = p(state, result); err == nil {
 				state.Drop()
 				return nil
 			}
+			if !state.Pushed() {
+				return err
+			}
 		}
 		state.Pop()
-
-		return NewParserError(name, state.Position())
+		return err
 	}
 }
 
+// Maybe creates a Parser which will attempt to match the given Parser but
+// will not return an error upon a mismatch unless the state cannot be
+// backtracked.
 func Maybe(q interface{}) Parser {
 	p := AsParser(q)
 
 	return func(state *State, result *Result) error {
 		state.Push()
-		if p(state, result) != nil {
+		if err := p(state, result); err != nil {
+			if !state.Pushed() {
+				return err
+			}
 			state.Pop()
 			return nil
 		}
 		state.Drop()
-
 		return nil
 	}
 }
 
+// Many creates a Parser which will attempt to match the given Parser as many
+// times as possible.
 func Many(q interface{}) Parser {
 	p := AsParser(q)
-	name := fmt.Sprintf("Many(%s)", typeRep(q))
 
 	return func(state *State, result *Result) error {
-		v := make([]Result, 1, 5)
-
-		state.Push()
-		if err := p(state, &v[0]); err != nil {
-			state.Pop()
-			return NewTraceError(name, err)
-		}
-		state.Drop()
-
-		state.Push()
-		before := state.Position()
+		v := make([]Result, 0, 5)
+		start := state.Position()
 		for p(state, result) == nil {
-			if state.Position() == before {
+			if start == state.Position() {
 				return nil
 			}
-			state.Drop()
-			state.Push()
 			v = append(v, *result)
 			*result = Result{}
 		}
-		state.Pop()
-
-		result.SetChildren(v)
-		return nil
-	}
-}
-
-func Count(q interface{}, n int) Parser {
-	p := AsParser(q)
-	name := fmt.Sprintf("Count(%s, %d)", typeRep(q), n)
-
-	return func(state *State, result *Result) error {
-		v := make([]Result, n)
-
-		state.Push()
-		for i := 0; i < n; i++ {
-			if err := p(state, &v[i]); err != nil {
-				state.Pop()
-				return NewTraceError(name, err)
-			}
-		}
-		state.Drop()
-
 		result.SetChildren(v)
 		return nil
 	}

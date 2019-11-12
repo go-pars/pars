@@ -30,7 +30,7 @@ func runeReps(p []rune) []string {
 
 func readRune(state *State) (rune, error) {
 	for i := 0; i < 4; i++ {
-		if err := state.Want(i + 1); err != nil {
+		if err := state.Request(i + 1); err != nil {
 			return utf8.RuneError, err
 		}
 		p := state.Buffer()
@@ -42,13 +42,16 @@ func readRune(state *State) (rune, error) {
 	return utf8.RuneError, errors.New("unable to read valid rune")
 }
 
+// Rune will attempt to match the next single rune.
+// If no runes are given, it will match any rune.
+// Otherwise, the given runes will be tested for a match.
 func Rune(rs ...rune) Parser {
 	switch len(rs) {
 	case 0:
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return NewTraceError("Rune()", err)
+				return err
 			}
 			result.SetValue(r)
 			state.Advance()
@@ -56,19 +59,18 @@ func Rune(rs ...rune) Parser {
 		}
 	case 1:
 		r := rs[0]
-		rep := runeRep(r)
-		name := fmt.Sprintf("Rune(%s)", rep)
+		what := fmt.Sprintf("expected `%s`", runeRep(r))
 
 		n := utf8.RuneLen(r)
 		p := make([]byte, n)
 		utf8.EncodeRune(p, r)
 
 		return func(state *State, result *Result) error {
-			if err := state.Want(n); err != nil {
-				return NewTraceError(name, err)
+			if err := state.Request(n); err != nil {
+				return err
 			}
 			if !bytes.Equal(state.Buffer(), p) {
-				return NewMismatchError(name, rep, state.Position())
+				return NewError(what, state.Position())
 			}
 			result.SetValue(r)
 			state.Advance()
@@ -76,7 +78,7 @@ func Rune(rs ...rune) Parser {
 		}
 	default:
 		reps := strings.Join(runeReps(rs), ", ")
-		name := fmt.Sprintf("Rune(%s)", reps)
+		what := fmt.Sprintf("expected one of [%s]", reps)
 
 		s := string(rs)
 		mismatch := func(r rune) bool { return !strings.ContainsRune(s, r) }
@@ -84,10 +86,10 @@ func Rune(rs ...rune) Parser {
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return NewTraceError(name, err)
+				return err
 			}
 			if mismatch(r) {
-				return NewMismatchError(name, reps, state.Position())
+				return NewError(what, state.Position())
 			}
 			result.SetValue(r)
 			state.Advance()
@@ -98,53 +100,43 @@ func Rune(rs ...rune) Parser {
 
 // RuneRange will match any rune within the given range.
 func RuneRange(begin, end rune) Parser {
-	switch sign(int(end - begin)) {
-	case -1:
-		panic(fmt.Errorf("rune `%s` is greater than `%s`", runeRep(begin), runeRep(end)))
-	case 0:
-		return Rune(begin)
-	default:
-		name := fmt.Sprintf("RuneRange(%s, %s)", runeRep(begin), runeRep(end))
-		rep := fmt.Sprintf("in range %s-%s", runeRep(begin), runeRep(end))
+	if begin < end {
+		what := fmt.Sprintf("expected in range %s-%s", runeRep(begin), runeRep(end))
 
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return NewTraceError(name, err)
+				return err
 			}
 			if r < begin || end < r {
-				return NewMismatchError(name, rep, state.Position())
+				return NewError(what, state.Position())
 			}
 			result.SetValue(r)
 			state.Advance()
 			return nil
 		}
 	}
+	panic("invalid rune range")
 }
 
 // Runes will match the given sequence of runes.
 func Runes(rs []rune) Parser {
-	n := len(rs)
-	switch n {
-	case 0:
-		return Epsilon
-	case 1:
-		return Rune(rs[0])
-	default:
+	if n := len(rs); n > 0 {
 		reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))
-		name := fmt.Sprintf("Runes([%s])", reps)
+		what := fmt.Sprintf("expected [%s]", reps)
 		p := []byte(string(rs))
 
 		return func(state *State, result *Result) error {
-			if err := state.Want(len(p)); err != nil {
-				return NewTraceError(name, err)
+			if err := state.Request(len(p)); err != nil {
+				return err
 			}
 			if !bytes.Equal(state.Buffer(), p) {
-				return NewMismatchError(name, reps, state.Position())
+				return NewError(what, state.Position())
 			}
 			result.SetValue(rs)
 			state.Advance()
 			return nil
 		}
 	}
+	panic("no runes given")
 }

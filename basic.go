@@ -5,23 +5,19 @@ func Epsilon(state *State, result *Result) error {
 	return nil
 }
 
-// Fail will always fail.
-func Fail(state *State, result *Result) error {
-	return NewParserError("must fail", state.Position())
-}
-
 // Head will match if the state is at the beginning of the buffer.
 func Head(state *State, result *Result) error {
 	if !state.Position().Head() {
-		return NewParserError("state is not at head", state.Position())
+		return NewError("state is not at head", state.Position())
 	}
 	return nil
 }
 
-// EOF matches if the state has reached the end of the io.Reader.
-func EOF(state *State, result *Result) error {
-	if !state.IsEOF() {
-		return NewParserError("state is not at EOF", state.Position())
+// End will match if the state buffer has been exhausted and no more bytes can
+// be read from the io.Reader object.
+func End(state *State, result *Result) error {
+	if state.Request(1) == nil {
+		return NewError("state is not at end", state.Position())
 	}
 	return nil
 }

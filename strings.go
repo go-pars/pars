@@ -6,15 +6,15 @@ import (
 )
 
 func String(s string) Parser {
-	name := fmt.Sprintf("String(\"%s\")", s)
+	what := fmt.Sprintf("expected \"%s\"", s)
 	p := []byte(s)
 
 	return func(state *State, result *Result) error {
-		if err := state.Want(len(p)); err != nil {
-			return NewTraceError(name, err)
+		if err := state.Request(len(p)); err != nil {
+			return err
 		}
 		if !bytes.Equal(state.Buffer(), p) {
-			return NewMismatchError(name, s, state.Position())
+			return NewError(what, state.Position())
 		}
 		result.SetValue(s)
 		state.Advance()

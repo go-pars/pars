@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ktnyt/assert"
+	"github.com/ktnyt/bench"
 	"github.com/ktnyt/pars"
 )
 
@@ -30,18 +31,18 @@ func BenchmarkRune(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
 	r0, r1 := []rune(hello), []rune(small)
 
-	b.Run("no argument", benchmark(pars.Rune(), p0))
-
-	b.Run("single argument", combineBench(
-		benchCase{"matching", benchmark(pars.Rune(r0[0]), p0)},
-		benchCase{"mismatch", benchmark(pars.Rune(r0[0]), p1)},
-	))
-
-	b.Run("many arguments", combineBench(
-		benchCase{"matching first", benchmark(pars.Rune(r0[0], r1[0]), p0)},
-		benchCase{"matching second", benchmark(pars.Rune(r1[0], r0[0]), p0)},
-		benchCase{"mismatch", benchmark(pars.Rune(r0[0]), p1)},
-	))
+	bench.Apply(b,
+		bench.C("no argument", benchmark(pars.Rune(), p0)),
+		bench.C("single argument",
+			bench.C("matching", benchmark(pars.Rune(r0[0]), p0)),
+			bench.C("mismatch", benchmark(pars.Rune(r0[0]), p1)),
+		),
+		bench.C("many arguments",
+			bench.C("matching first", benchmark(pars.Rune(r0[0], r1[0]), p0)),
+			bench.C("matching second", benchmark(pars.Rune(r1[0], r0[0]), p0)),
+			bench.C("mismatch", benchmark(pars.Rune(r0[0]), p1)),
+		),
+	)
 }
 
 func TestRuneRange(t *testing.T) {
@@ -57,8 +58,11 @@ func TestRuneRange(t *testing.T) {
 
 func BenchmarkRangeRune(b *testing.B) {
 	p := []byte(hello)
-	b.Run("matching", benchmark(pars.RuneRange('A', 'Z'), p))
-	b.Run("mismatch", benchmark(pars.RuneRange('a', 'z'), p))
+
+	bench.Apply(b,
+		bench.C("matching", benchmark(pars.RuneRange('A', 'Z'), p)),
+		bench.C("mismatch", benchmark(pars.RuneRange('a', 'z'), p)),
+	)
 }
 
 func TestRunes(t *testing.T) {
@@ -75,6 +79,9 @@ func TestRunes(t *testing.T) {
 
 func BenchmarkRunes(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
-	b.Run("matching", benchmark(pars.Runes([]rune(hello)[:5]), p0))
-	b.Run("mismatch", benchmark(pars.Runes([]rune(hello)[:5]), p1))
+
+	bench.Apply(b,
+		bench.C("matching", benchmark(pars.Runes([]rune(hello)[:5]), p0)),
+		bench.C("mismatch", benchmark(pars.Runes([]rune(hello)[:5]), p1)),
+	)
 }
