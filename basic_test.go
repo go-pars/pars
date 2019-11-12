@@ -36,7 +36,7 @@ func BenchmarkHead(b *testing.B) {
 	p := []byte(hello)
 	s := pars.FromBytes(p)
 
-	b.Run("is head", func(b *testing.B) {
+	b.Run("is at head", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			pars.Head(s, pars.Void)
@@ -45,7 +45,7 @@ func BenchmarkHead(b *testing.B) {
 
 	assert.Apply(b, assert.NoError(pars.Skip(s, 1)))
 
-	b.Run("not head", func(b *testing.B) {
+	b.Run("not at head", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			pars.Head(s, pars.Void)
@@ -67,7 +67,7 @@ func TestEnd(t *testing.T) {
 func BenchmarkEnd(b *testing.B) {
 	s := pars.FromString(matchingString)
 
-	b.Run("not End", func(b *testing.B) {
+	b.Run("not at end", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			pars.End(s, pars.Void)
@@ -78,7 +78,7 @@ func BenchmarkEnd(b *testing.B) {
 		s.Advance()
 	}
 
-	b.Run("is End", func(b *testing.B) {
+	b.Run("is at End", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			pars.End(s, pars.Void)
