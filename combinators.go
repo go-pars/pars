@@ -72,7 +72,7 @@ func Many(q interface{}) Parser {
 	p := AsParser(q)
 
 	return func(state *State, result *Result) error {
-		v := make([]Result, 0, 5)
+		v := []Result{}
 		start := state.Position()
 		for p(state, result) == nil {
 			if start == state.Position() {

@@ -41,9 +41,9 @@ func BenchmarkSeq(b *testing.B) {
 }
 
 func TestAny(t *testing.T) {
-	p0, p1, p2 := []byte(hello), []byte(small), []byte(goodbye)
+	p0, p1, p2 := []byte(small), []byte(large), []byte(hello)
 	n := 5
-	fst, snd := hello[:n], small[:n]
+	fst, snd := small[:n], large[:n]
 	e0, e1 := pars.NewValueResult(fst), pars.NewValueResult(snd)
 	p := pars.Any(fst, snd)
 
@@ -55,9 +55,9 @@ func TestAny(t *testing.T) {
 }
 
 func BenchmarkAny(b *testing.B) {
-	p0, p1, p2 := []byte(hello), []byte(small), []byte(goodbye)
+	p0, p1, p2 := []byte(small), []byte(large), []byte(hello)
 	n := 5
-	fst, snd := hello[:n], small[:n]
+	fst, snd := small[:n], large[:n]
 	p := pars.Any(fst, snd)
 
 	bench.Apply(b,
