@@ -7,39 +7,27 @@ import (
 )
 
 func convertInt(state *State, result *Result) error {
-	off := state.Offset()
-	state.Pop()
-	d := off - state.Offset()
-	if state.Request(d) != nil {
-		panic("logical error in Int: Request failed")
+	p, err := Trail(state)
+	if err != nil {
+		return err
 	}
-
-	p := state.Buffer()
 	n, err := strconv.Atoi(string(p))
 	if err != nil {
 		return err
 	}
-
-	state.Advance()
 	result.SetValue(n)
 	return nil
 }
 
 func convertNumber(state *State, result *Result) error {
-	off := state.Offset()
-	state.Pop()
-	d := off - state.Offset()
-	if state.Request(d) != nil {
-		panic("logical error in Number: Request failed")
+	p, err := Trail(state)
+	if err != nil {
+		return err
 	}
-
-	p := state.Buffer()
 	n, err := strconv.ParseFloat(string(p), 64)
 	if err != nil {
 		return err
 	}
-
-	state.Advance()
 	result.SetValue(n)
 	return nil
 }
