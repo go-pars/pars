@@ -2,6 +2,7 @@ package pars
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"strings"
 )
@@ -154,9 +155,11 @@ func (s *State) Clear() {
 
 // Skip the given state for the given number of bytes.
 func Skip(state *State, n int) error {
-	err := state.Request(n)
+	if err := state.Request(n); err != nil {
+		return err
+	}
 	state.Advance()
-	return err
+	return nil
 }
 
 // Next attempts to retrieve the next byte in the given state.
@@ -165,4 +168,21 @@ func Next(state *State) (byte, error) {
 		return 0, err
 	}
 	return state.Buffer()[0], nil
+}
+
+// Trail will return the extent of the state buffer spanning from the most
+// recently pushed state position to the current state position.
+func Trail(state *State) ([]byte, error) {
+	if !state.Pushed() {
+		return nil, errors.New("failed to backtrack")
+	}
+	off := state.Offset()
+	state.Pop()
+	n := off - state.Offset()
+	if state.Request(n) != nil {
+		panic("logical error: Request failed")
+	}
+	p := state.Buffer()
+	state.Advance()
+	return p, nil
 }
