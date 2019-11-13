@@ -67,7 +67,7 @@ func try(msgs ...string) string {
 
 var hello = "Hello world!"
 var small = "Small world!"
-var goodbye = "Goodbye world!"
+var large = "Large world!"
 
 var matchingString = "Hello world!"
 var matchingBytes = []byte(matchingString)
