@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// String creates a Parser which will attempt to match the given string.
 func String(s string) Parser {
 	what := fmt.Sprintf("expected \"%s\"", s)
 	p := []byte(s)

@@ -42,7 +42,7 @@ func readRune(state *State) (rune, error) {
 	return utf8.RuneError, errors.New("unable to read valid rune")
 }
 
-// Rune will attempt to match the next single rune.
+// Rune creates a Parser which will attempt to match the next single rune.
 // If no runes are given, it will match any rune.
 // Otherwise, the given runes will be tested for a match.
 func Rune(rs ...rune) Parser {
@@ -98,7 +98,8 @@ func Rune(rs ...rune) Parser {
 	}
 }
 
-// RuneRange will match any rune within the given range.
+// RuneRange creates a Parser which will attempt to match any rune within the
+// given range inclusively.
 func RuneRange(begin, end rune) Parser {
 	if begin < end {
 		what := fmt.Sprintf("expected in range %s-%s", runeRep(begin), runeRep(end))
@@ -119,7 +120,7 @@ func RuneRange(begin, end rune) Parser {
 	panic("invalid rune range")
 }
 
-// Runes will match the given sequence of runes.
+// Runes creates a parser which will attempt to match the given sequence of runes.
 func Runes(rs []rune) Parser {
 	if n := len(rs); n > 0 {
 		reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))

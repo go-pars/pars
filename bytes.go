@@ -8,7 +8,7 @@ import (
 	"github.com/ktnyt/ascii"
 )
 
-// Byte will attempt to match the next single byte.
+// Byte creates a Parser which will attempt to match the next single byte.
 // If no bytes are given, it will match any byte.
 // Otherwise, the given bytes will be tested for a match.
 func Byte(p ...byte) Parser {
@@ -60,7 +60,8 @@ func Byte(p ...byte) Parser {
 	}
 }
 
-// ByteRange will match any byte within the given range.
+// ByteRange creates a Parser which will attempt to match a byte between the
+// given range inclusively.
 func ByteRange(begin, end byte) Parser {
 	if begin < end {
 		what := fmt.Sprintf("expected in range %s-%s", ascii.Rep(begin), ascii.Rep(end))
@@ -81,7 +82,7 @@ func ByteRange(begin, end byte) Parser {
 	panic("invalid byte range")
 }
 
-// Bytes will match the given sequence of bytes.
+// Bytes creates a Parser which will attempt to match the given sequence of bytes.
 func Bytes(p []byte) Parser {
 	if n := len(p); n > 0 {
 		reps := fmt.Sprintf("[%s]", strings.Join(ascii.Reps(p), ", "))
