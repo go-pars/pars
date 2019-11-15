@@ -1,11 +1,8 @@
 package pars
 
 import (
-	"errors"
 	"fmt"
 )
-
-var errBacktrack = errors.New("unable to backtrack")
 
 // Error is a generic parser error.
 type Error struct {

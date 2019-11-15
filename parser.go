@@ -1,6 +1,10 @@
 package pars
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ktnyt/ascii"
+)
 
 // Parser is the function signature of a parser.
 type Parser func(*State, *Result) error
@@ -39,6 +43,8 @@ func AsParser(q interface{}) Parser {
 		return Runes(p)
 	case string:
 		return String(p)
+	case ascii.Filter:
+		return Filter(p)
 	default:
 		panic(fmt.Errorf("cannot convert type `%T` to a parser", p))
 	}
