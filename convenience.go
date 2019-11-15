@@ -156,5 +156,8 @@ func Line(state *State, result *Result) error {
 		panic(err)
 	}
 	result.SetToken(p)
+	if err := Skip(state, 1); err != nil {
+		return err
+	}
 	return nil
 }
