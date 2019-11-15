@@ -142,3 +142,19 @@ func Until(q interface{}) Parser {
 		}
 	}
 }
+
+// Line matches up to a newline byte or the end of state.
+func Line(state *State, result *Result) error {
+	state.Push()
+	c, err := Next(state)
+	for err != nil && c != '\n' {
+		state.Advance()
+		c, err = Next(state)
+	}
+	p, err := Trail(state)
+	if err != nil {
+		panic(err)
+	}
+	result.SetToken(p)
+	return nil
+}
