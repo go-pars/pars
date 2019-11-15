@@ -23,7 +23,7 @@ func End(state *State, result *Result) error {
 }
 
 // Cut will disable backtracking beyond the cut position.
-func Cut(state *State, result *result) error {
+func Cut(state *State, result *Result) error {
 	state.Clear()
 	return nil
 }
