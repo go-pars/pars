@@ -20,6 +20,6 @@ func TestString(t *testing.T) {
 
 func BenchmarkString(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
-	b.Run("matching", benchmark(pars.String(hello[:5]), p0))
-	b.Run("matching", benchmark(pars.String(hello[:5]), p1))
+	b.Run("matching", ParserBench(pars.String(hello[:5]), p0))
+	b.Run("matching", ParserBench(pars.String(hello[:5]), p1))
 }

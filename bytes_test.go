@@ -31,15 +31,15 @@ func BenchmarkByte(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
 
 	bench.Apply(b,
-		bench.C("no argument", benchmark(pars.Byte(), p0)),
+		bench.C("no argument", ParserBench(pars.Byte(), p0)),
 		bench.C("single argument",
-			bench.C("matching", benchmark(pars.Byte(p0[0]), p0)),
-			bench.C("mismatch", benchmark(pars.Byte(p0[0]), p1)),
+			bench.C("matching", ParserBench(pars.Byte(p0[0]), p0)),
+			bench.C("mismatch", ParserBench(pars.Byte(p0[0]), p1)),
 		),
 		bench.C("many arguments",
-			bench.C("matching first", benchmark(pars.Byte(p0[0], p1[0]), p0)),
-			bench.C("matching second", benchmark(pars.Byte(p1[0], p0[0]), p0)),
-			bench.C("mismatch", benchmark(pars.Byte(p0[0]), p1)),
+			bench.C("matching first", ParserBench(pars.Byte(p0[0], p1[0]), p0)),
+			bench.C("matching second", ParserBench(pars.Byte(p1[0], p0[0]), p0)),
+			bench.C("mismatch", ParserBench(pars.Byte(p0[0]), p1)),
 		),
 	)
 
@@ -59,8 +59,8 @@ func TestByteRange(t *testing.T) {
 func BenchmarkRangeByte(b *testing.B) {
 	p := []byte(hello)
 	bench.Apply(b,
-		bench.C("matching", benchmark(pars.ByteRange('A', 'Z'), p)),
-		bench.C("mismatch", benchmark(pars.ByteRange('a', 'z'), p)),
+		bench.C("matching", ParserBench(pars.ByteRange('A', 'Z'), p)),
+		bench.C("mismatch", ParserBench(pars.ByteRange('a', 'z'), p)),
 	)
 }
 
@@ -78,7 +78,7 @@ func TestBytes(t *testing.T) {
 func BenchmarkBytes(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
 	bench.Apply(b,
-		bench.C("matching", benchmark(pars.Bytes(p0[:5]), p0)),
-		bench.C("mismatch", benchmark(pars.Bytes(p0[:5]), p1)),
+		bench.C("matching", ParserBench(pars.Bytes(p0[:5]), p0)),
+		bench.C("mismatch", ParserBench(pars.Bytes(p0[:5]), p1)),
 	)
 }

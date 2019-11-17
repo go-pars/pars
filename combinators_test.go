@@ -27,7 +27,7 @@ func TestSeq(t *testing.T) {
 
 func BenchmarkSeq(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
-	s := matchingString[:5]
+	s := hello[:5]
 	q := make([]interface{}, len(s))
 	for i, c := range s {
 		q[i] = c
@@ -35,8 +35,8 @@ func BenchmarkSeq(b *testing.B) {
 	p := pars.Seq(q...)
 
 	bench.Apply(b,
-		bench.C("matching", benchmark(p, p0)),
-		bench.C("mismatch", benchmark(p, p1)),
+		bench.C("matching", ParserBench(p, p0)),
+		bench.C("mismatch", ParserBench(p, p1)),
 	)
 }
 
@@ -61,9 +61,9 @@ func BenchmarkAny(b *testing.B) {
 	p := pars.Any(fst, snd)
 
 	bench.Apply(b,
-		bench.C("matching first", benchmark(p, p0)),
-		bench.C("matching second", benchmark(p, p1)),
-		bench.C("mismatch", benchmark(p, p2)),
+		bench.C("matching first", ParserBench(p, p0)),
+		bench.C("matching second", ParserBench(p, p1)),
+		bench.C("mismatch", ParserBench(p, p2)),
 	)
 }
 
@@ -84,8 +84,8 @@ func BenchmarkMaybe(b *testing.B) {
 	p := pars.Maybe(hello[:5])
 
 	bench.Apply(b,
-		bench.C("matching", benchmark(p, p0)),
-		bench.C("mismatch", benchmark(p, p1)),
+		bench.C("matching", ParserBench(p, p0)),
+		bench.C("mismatch", ParserBench(p, p1)),
 	)
 }
 
@@ -111,8 +111,8 @@ func BenchmarkMany(b *testing.B) {
 	p0, p1, p2 := pars.Many(byte('H')), pars.Many(pars.Byte()), pars.Many('h')
 
 	bench.Apply(b,
-		bench.C("match one", benchmark(p0, p)),
-		bench.C("match many", benchmark(p1, p)),
-		bench.C("mismatch", benchmark(p2, p)),
+		bench.C("match one", ParserBench(p0, p)),
+		bench.C("match many", ParserBench(p1, p)),
+		bench.C("mismatch", ParserBench(p2, p)),
 	)
 }

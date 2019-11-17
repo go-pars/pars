@@ -32,15 +32,15 @@ func BenchmarkRune(b *testing.B) {
 	r0, r1 := []rune(hello), []rune(small)
 
 	bench.Apply(b,
-		bench.C("no argument", benchmark(pars.Rune(), p0)),
+		bench.C("no argument", ParserBench(pars.Rune(), p0)),
 		bench.C("single argument",
-			bench.C("matching", benchmark(pars.Rune(r0[0]), p0)),
-			bench.C("mismatch", benchmark(pars.Rune(r0[0]), p1)),
+			bench.C("matching", ParserBench(pars.Rune(r0[0]), p0)),
+			bench.C("mismatch", ParserBench(pars.Rune(r0[0]), p1)),
 		),
 		bench.C("many arguments",
-			bench.C("matching first", benchmark(pars.Rune(r0[0], r1[0]), p0)),
-			bench.C("matching second", benchmark(pars.Rune(r1[0], r0[0]), p0)),
-			bench.C("mismatch", benchmark(pars.Rune(r0[0]), p1)),
+			bench.C("matching first", ParserBench(pars.Rune(r0[0], r1[0]), p0)),
+			bench.C("matching second", ParserBench(pars.Rune(r1[0], r0[0]), p0)),
+			bench.C("mismatch", ParserBench(pars.Rune(r0[0]), p1)),
 		),
 	)
 }
@@ -60,8 +60,8 @@ func BenchmarkRangeRune(b *testing.B) {
 	p := []byte(hello)
 
 	bench.Apply(b,
-		bench.C("matching", benchmark(pars.RuneRange('A', 'Z'), p)),
-		bench.C("mismatch", benchmark(pars.RuneRange('a', 'z'), p)),
+		bench.C("matching", ParserBench(pars.RuneRange('A', 'Z'), p)),
+		bench.C("mismatch", ParserBench(pars.RuneRange('a', 'z'), p)),
 	)
 }
 
@@ -81,7 +81,7 @@ func BenchmarkRunes(b *testing.B) {
 	p0, p1 := []byte(hello), []byte(small)
 
 	bench.Apply(b,
-		bench.C("matching", benchmark(pars.Runes([]rune(hello)[:5]), p0)),
-		bench.C("mismatch", benchmark(pars.Runes([]rune(hello)[:5]), p1)),
+		bench.C("matching", ParserBench(pars.Runes([]rune(hello)[:5]), p0)),
+		bench.C("mismatch", ParserBench(pars.Runes([]rune(hello)[:5]), p1)),
 	)
 }

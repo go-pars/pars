@@ -40,3 +40,29 @@ func Filter(filter ascii.Filter) Parser {
 		return nil
 	}
 }
+
+// Word creates a Parser which will attempt to match a group of bytes which
+// satisfy the given filter.
+func Word(filter ascii.Filter) Parser {
+	v := reflect.ValueOf(filter)
+	f := runtime.FuncForPC(v.Pointer())
+	what := fmt.Sprintf("expected to word of `%s`", f.Name())
+
+	return func(state *State, result *Result) error {
+		state.Push()
+		c, err := Next(state)
+		for err == nil && filter(c) {
+			state.Advance()
+			c, err = Next(state)
+		}
+		p, err := Trail(state)
+		if err != nil {
+			return err
+		}
+		if len(p) == 0 {
+			return NewError(what, state.Position())
+		}
+		result.SetToken(p)
+		return nil
+	}
+}

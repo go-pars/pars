@@ -19,3 +19,17 @@ func Count(q interface{}, n int) Parser {
 	}
 	return Seq(qs...)
 }
+
+// Delim creates a Parser which will attempt to match the first Parser multiple
+// times like Many, but with the second Parser in between.
+func Delim(q, s interface{}) Parser {
+	p, d := AsParser(q), AsParser(s)
+	return Seq(p, Many(Seq(d, p).Map(Child(1)))).Map(func(result *Result) error {
+		head, tail := result.Children[0], result.Children[1].Children
+		children := make([]Result, len(tail)+1)
+		children[0] = head
+		copy(children[1:], tail)
+		result.SetChildren(children)
+		return nil
+	})
+}

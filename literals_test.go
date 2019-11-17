@@ -38,10 +38,10 @@ func TestInt(t *testing.T) {
 }
 
 func BenchmarkInt(b *testing.B) {
-	b.Run("matching 0", benchmark(pars.Int, []byte("0 is the answer")))
-	b.Run("matching 42", benchmark(pars.Int, []byte("42 is the answer")))
-	b.Run("matching -42", benchmark(pars.Int, []byte("-42 is the answer")))
-	b.Run("mismatch", benchmark(pars.Int, []byte(hello)))
+	b.Run("matching 0", ParserBench(pars.Int, []byte("0 is the answer")))
+	b.Run("matching 42", ParserBench(pars.Int, []byte("42 is the answer")))
+	b.Run("matching -42", ParserBench(pars.Int, []byte("-42 is the answer")))
+	b.Run("mismatch", ParserBench(pars.Int, []byte(hello)))
 }
 
 func TestNumber(t *testing.T) {
@@ -146,7 +146,7 @@ func BenchmarkNumber(b *testing.B) {
 
 	validCases := make([]bench.F, len(validValues))
 	for i, s := range validValues {
-		validCases[i] = bench.C(s, benchmark(pars.Number, []byte(s)))
+		validCases[i] = bench.C(s, ParserBench(pars.Number, []byte(s)))
 	}
 
 	bench.Apply(b,

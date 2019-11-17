@@ -65,7 +65,7 @@ func TestEnd(t *testing.T) {
 }
 
 func BenchmarkEnd(b *testing.B) {
-	s := pars.FromString(matchingString)
+	s := pars.FromString(hello)
 
 	b.Run("not at end", func(b *testing.B) {
 		b.ResetTimer()

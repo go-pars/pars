@@ -62,8 +62,42 @@ func BenchmarkFilter(b *testing.B) {
 		name := f.Name()
 
 		p := pars.Filter(bc.Filter)
-		validCases[i] = bench.C(name, benchmark(p, bc.Set))
+		validCases[i] = bench.C(name, ParserBench(p, bc.Set))
 	}
 
 	bench.Apply(b, validCases...)
+}
+
+func TestWord(t *testing.T) {
+	p0, p1, p2 := []byte(hello), []byte(small), []byte(large)
+	n := 5
+	e0 := pars.NewTokenResult(p0[:n])
+	e1 := pars.NewTokenResult(p1[:n])
+	e2 := pars.NewTokenResult(p2[:n])
+	matching := pars.Word(ascii.IsLetter)
+	mismatch := pars.Word(ascii.IsSpace)
+
+	assert.Apply(t,
+		assert.C("matching",
+			MatchingCase(matching, p0, e0, n),
+			MatchingCase(matching, p1, e1, n),
+			MatchingCase(matching, p2, e2, n),
+		),
+		assert.C("mismatch",
+			MismatchCase(mismatch, p0),
+			MismatchCase(mismatch, p1),
+			MismatchCase(mismatch, p2),
+		),
+	)
+}
+
+func BenchmarkWord(b *testing.B) {
+	p := []byte(hello)
+	matching := pars.Word(ascii.IsLetter)
+	mismatch := pars.Word(ascii.IsSpace)
+
+	bench.Apply(b,
+		bench.C("matching", ParserBench(matching, p)),
+		bench.C("mismatch", ParserBench(mismatch, p)),
+	)
 }
