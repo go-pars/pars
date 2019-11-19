@@ -1,10 +1,15 @@
 package pars
 
+import (
+	"fmt"
+)
+
 // Seq creates a Parser which will attempt to match all of the given Parsers
 // in the given order. If any of the given Parsers fail to match, the state
 // will attempt to backtrack to the position before any of the given Parsers
 // were applied.
 func Seq(qs ...interface{}) Parser {
+	name := fmt.Sprintf("Seq(%d)", len(qs))
 	ps := AsParsers(qs...)
 
 	return func(state *State, result *Result) error {
@@ -13,7 +18,7 @@ func Seq(qs ...interface{}) Parser {
 		for i, p := range ps {
 			if err := p(state, &v[i]); err != nil {
 				state.Pop()
-				return err
+				return NewNestedError(name, err)
 			}
 		}
 		state.Drop()
@@ -28,6 +33,7 @@ func Seq(qs ...interface{}) Parser {
 // error from the parser will be returned immediately if the state cannot be
 // backtracked. Otherwise, the error from the last Parser will be returned.
 func Any(qs ...interface{}) Parser {
+	name := fmt.Sprintf("Any(%d)", len(qs))
 	ps := AsParsers(qs...)
 
 	return func(state *State, result *Result) (err error) {
@@ -38,11 +44,11 @@ func Any(qs ...interface{}) Parser {
 				return nil
 			}
 			if !state.Pushed() {
-				return err
+				return NewNestedError(name, err)
 			}
 		}
 		state.Pop()
-		return err
+		return NewNestedError(name, err)
 	}
 }
 
@@ -56,7 +62,7 @@ func Maybe(q interface{}) Parser {
 		state.Push()
 		if err := p(state, result); err != nil {
 			if !state.Pushed() {
-				return err
+				return NewNestedError("Maybe", err)
 			}
 			state.Pop()
 			return nil

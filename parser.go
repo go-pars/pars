@@ -22,6 +22,24 @@ func (p Parser) Map(f Map) Parser {
 	}
 }
 
+// Bind will bind the given value as the parser result value.
+func (p Parser) Bind(v interface{}) Parser {
+	return func(state *State, result *Result) error {
+		if err := p(state, result); err != nil {
+			return err
+		}
+		result.SetValue(v)
+		return nil
+	}
+}
+
+// Parse the given state using the parser and return the Result.
+func (p Parser) Parse(s *State) (Result, error) {
+	r := Result{}
+	err := p(s, &r)
+	return r, err
+}
+
 // AsParser attempts to create a Parser for a given argument.
 func AsParser(q interface{}) Parser {
 	switch p := q.(type) {

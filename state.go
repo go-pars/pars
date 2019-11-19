@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"strings"
+
+	"github.com/ktnyt/ascii"
 )
 
 const (
@@ -21,6 +23,7 @@ type State struct {
 	req int
 	pos Position
 	stk *stack
+	ign ascii.Filter
 }
 
 // NewState creates a new state from the given io.Reader.
@@ -33,6 +36,7 @@ func NewState(r io.Reader) *State {
 		req: -1,
 		pos: Position{0, 0},
 		stk: newStack(),
+		ign: nil,
 	}
 }
 
@@ -56,7 +60,7 @@ func (s *State) Read(p []byte) (int, error) {
 // returns an error, Request will return the corresponding error.
 func (s *State) Request(n int) error {
 	// There are not enough bytes left in the buffer.
-	if len(s.buf) < s.off+n {
+	for len(s.buf) < s.off+n {
 		// The io.Reader object previously returned an error.
 		if s.err != nil {
 			return s.err

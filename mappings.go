@@ -36,3 +36,9 @@ func Cat(result *Result) error {
 	result.SetToken(p)
 	return nil
 }
+
+// ToString will convert the Token field to a string Value.
+func ToString(result *Result) error {
+	result.SetValue(string(result.Token))
+	return nil
+}

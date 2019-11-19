@@ -14,9 +14,11 @@ import (
 func Byte(p ...byte) Parser {
 	switch len(p) {
 	case 0:
+		name := "Byte()"
+
 		return func(state *State, result *Result) error {
 			if err := state.Request(1); err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			result.SetToken([]byte{state.Buffer()[0]})
 			state.Advance()
@@ -24,12 +26,14 @@ func Byte(p ...byte) Parser {
 		}
 	case 1:
 		e := p[0]
-		what := fmt.Sprintf("expected `%s`", ascii.Rep(e))
+		rep := ascii.Rep(e)
+		name := fmt.Sprintf("Byte(%s)", rep)
+		what := fmt.Sprintf("expected `%s`", rep)
 
 		return func(state *State, result *Result) error {
 			c, err := Next(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if c != e {
 				return NewError(what, state.Position())
@@ -40,6 +44,7 @@ func Byte(p ...byte) Parser {
 		}
 	default:
 		reps := strings.Join(ascii.Reps(p), ", ")
+		name := fmt.Sprintf("Byte(%s)", reps)
 		what := fmt.Sprintf("expected one of [%s]", reps)
 
 		s := string(p)
@@ -48,7 +53,7 @@ func Byte(p ...byte) Parser {
 		return func(state *State, result *Result) error {
 			c, err := Next(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if mismatch(c) {
 				return NewError(what, state.Position())
@@ -64,12 +69,14 @@ func Byte(p ...byte) Parser {
 // given range inclusively.
 func ByteRange(begin, end byte) Parser {
 	if begin < end {
-		what := fmt.Sprintf("expected in range %s-%s", ascii.Rep(begin), ascii.Rep(end))
+		rbegin, rend := ascii.Rep(begin), ascii.Rep(end)
+		name := fmt.Sprintf("ByteRange(%s, %s)", rbegin, rend)
+		what := fmt.Sprintf("expected in range %s-%s", rbegin, rend)
 
 		return func(state *State, result *Result) error {
 			c, err := Next(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if c < begin || end < c {
 				return NewError(what, state.Position())
@@ -86,11 +93,12 @@ func ByteRange(begin, end byte) Parser {
 func Bytes(p []byte) Parser {
 	if n := len(p); n > 0 {
 		reps := fmt.Sprintf("[%s]", strings.Join(ascii.Reps(p), ", "))
+		name := fmt.Sprintf("Bytes([%s])", reps)
 		what := fmt.Sprintf("expected [%s]", reps)
 
 		return func(state *State, result *Result) error {
 			if err := state.Request(n); err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if !bytes.Equal(state.Buffer(), p) {
 				return NewError(what, state.Position())

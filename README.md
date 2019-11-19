@@ -273,18 +273,3 @@ func TestPolish(t *testing.T) {
 
 By applying these concepts you can now create more complicated parsers like the
 JSON parser included in the examples directory.
-
-## Codebase
-| File           | Contents                                     |
-|:---------------|:---------------------------------------------|
-| parser.go      | Core parser definition and functionalities.  |
-| state.go       | Parser state definition and implementation.  |
-| result.go      | Parser result definition and implementation. |
-| basic.go       | Basic parsers for used combining.            |
-| bytes.go       | Parsers for matching byte patterns.          |
-| runes.go       | Parsers for matching rune patterns.          |
-| strings.go     | Parsers for matching string patterns.        |
-| combinators.go | Core combinator definitions.                 |
-| composite.go   | Additional composite combinators.            |
-| literals.go    | Parsers for various literal values.          |
-| mappings.go    | Utilities for common result mappings.        |

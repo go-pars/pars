@@ -153,3 +153,83 @@ func BenchmarkNumber(b *testing.B) {
 		bench.C("matching", validCases...),
 	)
 }
+
+func TestBetween(t *testing.T) {
+	p0 := []byte("(" + hello + ")")
+	p1 := []byte("(\\)" + hello + ")")
+	p2 := []byte("(" + hello)
+	p3 := []byte("{hello, world}")
+	e0 := pars.NewTokenResult([]byte(hello))
+	e1 := pars.NewTokenResult([]byte("\\)" + hello))
+	p := pars.Between('(', ')')
+
+	assert.Apply(t,
+		assert.C("matching",
+			MatchingCase(p, p0, e0, len(p0)),
+			MatchingCase(p, p1, e1, len(p1)),
+		),
+		assert.C("mismatch",
+			MismatchCase(p, p2),
+			MismatchCase(p, p3),
+		),
+	)
+}
+
+func BenchmarkBetween(b *testing.B) {
+	p0 := []byte("(" + hello + ")")
+	p1 := []byte("(\\)" + hello + ")")
+	p2 := []byte("(" + hello)
+	p3 := []byte("{hello, world}")
+	p := pars.Between('(', ')')
+
+	bench.Apply(b,
+		bench.C("matching",
+			ParserBench(p, p0),
+			ParserBench(p, p1),
+		),
+		bench.C("mismatch",
+			ParserBench(p, p2),
+			ParserBench(p, p3),
+		),
+	)
+}
+
+func TestQuoted(t *testing.T) {
+	p0 := []byte("\"" + hello + "\"")
+	p1 := []byte("\"\\\"" + hello + "\"")
+	p2 := []byte("'" + hello + "'")
+	p3 := []byte("\"" + hello)
+	e0 := pars.NewTokenResult([]byte(hello))
+	e1 := pars.NewTokenResult([]byte("\\\"" + hello))
+	p := pars.Quoted('"')
+
+	assert.Apply(t,
+		assert.C("matching",
+			MatchingCase(p, p0, e0, len(p0)),
+			MatchingCase(p, p1, e1, len(p1)),
+		),
+		assert.C("mismatch",
+			MismatchCase(p, p2),
+			MismatchCase(p, p3),
+		),
+	)
+}
+
+func BenchmarkQuoted(b *testing.B) {
+	p0 := []byte("\"" + hello + "\"")
+	p1 := []byte("\"\\\"" + hello + "\"")
+	p2 := []byte("'" + hello + "'")
+	p3 := []byte("\"" + hello)
+	p := pars.Quoted('"')
+
+	bench.Apply(b,
+		bench.C("matching",
+			ParserBench(p, p0),
+			ParserBench(p, p1),
+		),
+		bench.C("mismatch",
+			ParserBench(p, p2),
+			ParserBench(p, p3),
+		),
+	)
+}

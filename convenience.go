@@ -2,19 +2,25 @@ package pars
 
 import (
 	"bytes"
+	"fmt"
+	"reflect"
+	"runtime"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/ktnyt/ascii"
 )
 
 func untilByte(e byte) Parser {
+	name := fmt.Sprintf("Until(%s)", ascii.Rep(e))
+
 	return func(state *State, result *Result) error {
 		state.Push()
 
 		c, err := Next(state)
 		if err != nil {
 			state.Pop()
-			return err
+			return NewNestedError(name, err)
 		}
 
 		for c != e {
@@ -22,13 +28,13 @@ func untilByte(e byte) Parser {
 			c, err = Next(state)
 			if err != nil {
 				state.Pop()
-				return err
+				return NewNestedError(name, err)
 			}
 		}
 
 		p, err := Trail(state)
 		if err != nil {
-			return err
+			return NewNestedError(name, err)
 		}
 		result.SetToken(p)
 		return nil
@@ -42,19 +48,21 @@ func untilBytes(e []byte) Parser {
 	case 1:
 		return untilByte(e[0])
 	default:
+		name := fmt.Sprintf("Until(%s)", strings.Join(ascii.Reps(e), ", "))
+
 		return func(state *State, result *Result) error {
 			state.Push()
 
 			for {
 				if err := state.Request(len(e)); err != nil {
 					state.Pop()
-					return err
+					return NewNestedError(name, err)
 				}
 
 				if bytes.Equal(state.Buffer(), e) {
 					p, err := Trail(state)
 					if err != nil {
-						return err
+						return NewNestedError(name, err)
 					}
 					result.SetToken(p)
 					return nil
@@ -62,7 +70,7 @@ func untilBytes(e []byte) Parser {
 
 				if err := Skip(state, 1); err != nil {
 					state.Pop()
-					return err
+					return NewNestedError(name, err)
 				}
 			}
 		}
@@ -70,13 +78,17 @@ func untilBytes(e []byte) Parser {
 }
 
 func untilFilter(filter ascii.Filter) Parser {
+	v := reflect.ValueOf(filter)
+	f := runtime.FuncForPC(v.Pointer())
+	name := fmt.Sprintf("Until(%s)", f.Name())
+
 	return func(state *State, result *Result) error {
 		state.Push()
 
 		c, err := Next(state)
 		if err != nil {
 			state.Pop()
-			return err
+			return NewNestedError(name, err)
 		}
 
 		for !filter(c) {
@@ -84,13 +96,13 @@ func untilFilter(filter ascii.Filter) Parser {
 			c, err = Next(state)
 			if err != nil {
 				state.Pop()
-				return err
+				return NewNestedError(name, err)
 			}
 		}
 
 		p, err := Trail(state)
 		if err != nil {
-			return err
+			return NewNestedError(name, err)
 		}
 		result.SetToken(p)
 		return nil
@@ -127,7 +139,7 @@ func Until(q interface{}) Parser {
 				state.Drop()
 				if err := Skip(state, 1); err != nil {
 					state.Pop()
-					return err
+					return NewNestedError("Until", err)
 				}
 				state.Push()
 			}
@@ -135,7 +147,7 @@ func Until(q interface{}) Parser {
 
 			p, err := Trail(state)
 			if err != nil {
-				return err
+				return NewNestedError("Until", err)
 			}
 			result.SetToken(p)
 			return nil
@@ -157,7 +169,7 @@ func Line(state *State, result *Result) error {
 	}
 	result.SetToken(p)
 	if err := Skip(state, 1); err != nil {
-		return err
+		return NewNestedError("Line", err)
 	}
 	return nil
 }

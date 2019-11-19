@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ktnyt/ascii"
@@ -49,7 +50,7 @@ func Int(state *State, result *Result) error {
 
 	c, err := Next(state)
 	if err != nil {
-		return err
+		return NewNestedError("Int", err)
 	}
 
 	// Test the first byte for a possible negative sign.
@@ -57,7 +58,7 @@ func Int(state *State, result *Result) error {
 		state.Advance()
 		c, err = Next(state)
 		if err != nil {
-			return err
+			return NewNestedError("Int", err)
 		}
 	}
 
@@ -81,7 +82,11 @@ func Int(state *State, result *Result) error {
 		c, err = Next(state)
 	}
 
-	return convertInt(state, result)
+	if err := convertInt(state, result); err != nil {
+		return NewNestedError("Int", err)
+	}
+
+	return nil
 }
 
 // Number will match a floating point number.
@@ -104,7 +109,7 @@ func Number(state *State, result *Result) error {
 
 	c, err := Next(state)
 	if err != nil {
-		return err
+		return NewNestedError("Number", err)
 	}
 
 	// Test the first byte for a possible negative sign.
@@ -113,7 +118,7 @@ func Number(state *State, result *Result) error {
 		c, err = Next(state)
 		if err != nil {
 			state.Pop()
-			return err
+			return NewNestedError("Number", err)
 		}
 	}
 
@@ -148,7 +153,10 @@ func Number(state *State, result *Result) error {
 		c, err = Next(state)
 		if err != nil {
 			state.Pop()
-			return convertNumber(state, result)
+			if err := convertNumber(state, result); err != nil {
+				return NewNestedError("Number", err)
+			}
+			return nil
 		}
 
 		if !ascii.IsDigit(c) {
@@ -178,7 +186,10 @@ func Number(state *State, result *Result) error {
 		c, err = Next(state)
 		if err != nil {
 			state.Pop()
-			return convertNumber(state, result)
+			if err := convertNumber(state, result); err != nil {
+				return NewNestedError("Number", err)
+			}
+			return nil
 		}
 
 		// Test the byte for a possible positive or negative sign.
@@ -187,14 +198,20 @@ func Number(state *State, result *Result) error {
 			c, err = Next(state)
 			if err != nil {
 				state.Pop()
-				return convertNumber(state, result)
+				if err := convertNumber(state, result); err != nil {
+					return NewNestedError("Number", err)
+				}
+				return nil
 			}
 		}
 
 		// There are no digits so backtrack and return.
 		if !ascii.IsDigit(c) {
 			state.Pop()
-			return convertNumber(state, result)
+			if err := convertNumber(state, result); err != nil {
+				return NewNestedError("Number", err)
+			}
+			return nil
 		}
 
 		state.Advance()
@@ -210,5 +227,66 @@ func Number(state *State, result *Result) error {
 		state.Drop()
 	}
 
-	return convertNumber(state, result)
+	if err := convertNumber(state, result); err != nil {
+		return NewNestedError("Number", err)
+	}
+	return nil
 }
+
+// Between creates a Parser which will attempt to match a sequence of bytes
+// between the given bytes. If a backslash appears in the middle of the string,
+// the byte immediately following will be skipped.
+func Between(l, r byte) Parser {
+	name := fmt.Sprintf("Between(%s, %s)", ascii.Rep(l), ascii.Rep(r))
+	whatL := fmt.Sprintf("expected opening `%c`", l)
+	whatR := fmt.Sprintf("expected closing `%c`", r)
+
+	return func(state *State, result *Result) error {
+		state.Push()
+
+		c, err := Next(state)
+		if err != nil {
+			return NewNestedError(name, err)
+		}
+		if c != l {
+			return NewError(whatL, state.Position())
+		}
+
+		state.Advance()
+
+		c, err = Next(state)
+		for err == nil && c != r {
+			if c == '\\' {
+				state.Advance()
+				_, err = Next(state)
+				if err != nil {
+					state.Pop()
+					return NewError(whatR, state.Position())
+				}
+			}
+			state.Advance()
+			c, err = Next(state)
+		}
+
+		if err != nil {
+			state.Pop()
+			return NewError(whatR, state.Position())
+		}
+
+		p, err := Trail(state)
+		if err != nil {
+			return NewNestedError(name, err)
+		}
+		if err := Skip(state, 1); err != nil {
+			return NewNestedError(name, err)
+		}
+		fmt.Printf("%T %s\n", state.rd, string(p))
+		result.SetToken(p[1:])
+		return nil
+	}
+}
+
+// Quoted creates a Parser which will attempt to match a sequence of bytes
+// flanked by the given byte. This Parser is equivalent to the following:
+//   Between(c, c)
+func Quoted(c byte) Parser { return Between(c, c) }

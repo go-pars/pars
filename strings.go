@@ -7,12 +7,13 @@ import (
 
 // String creates a Parser which will attempt to match the given string.
 func String(s string) Parser {
-	what := fmt.Sprintf("expected \"%s\"", s)
+	name := fmt.Sprintf(`String(%s)`, s)
+	what := fmt.Sprintf(`expected "%s"`, s)
 	p := []byte(s)
 
 	return func(state *State, result *Result) error {
 		if err := state.Request(len(p)); err != nil {
-			return err
+			return NewNestedError(name, err)
 		}
 		if !bytes.Equal(state.Buffer(), p) {
 			return NewError(what, state.Position())

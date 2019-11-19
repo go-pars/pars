@@ -48,10 +48,12 @@ func readRune(state *State) (rune, error) {
 func Rune(rs ...rune) Parser {
 	switch len(rs) {
 	case 0:
+		name := "Rune"
+
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			result.SetValue(r)
 			state.Advance()
@@ -59,7 +61,9 @@ func Rune(rs ...rune) Parser {
 		}
 	case 1:
 		r := rs[0]
-		what := fmt.Sprintf("expected `%s`", runeRep(r))
+		rep := runeRep(r)
+		name := fmt.Sprintf("Rune(%s)", rep)
+		what := fmt.Sprintf("expected `%s`", rep)
 
 		n := utf8.RuneLen(r)
 		p := make([]byte, n)
@@ -67,7 +71,7 @@ func Rune(rs ...rune) Parser {
 
 		return func(state *State, result *Result) error {
 			if err := state.Request(n); err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if !bytes.Equal(state.Buffer(), p) {
 				return NewError(what, state.Position())
@@ -78,6 +82,7 @@ func Rune(rs ...rune) Parser {
 		}
 	default:
 		reps := strings.Join(runeReps(rs), ", ")
+		name := fmt.Sprintf("Rune(%s)", reps)
 		what := fmt.Sprintf("expected one of [%s]", reps)
 
 		s := string(rs)
@@ -86,7 +91,7 @@ func Rune(rs ...rune) Parser {
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if mismatch(r) {
 				return NewError(what, state.Position())
@@ -102,12 +107,14 @@ func Rune(rs ...rune) Parser {
 // given range inclusively.
 func RuneRange(begin, end rune) Parser {
 	if begin < end {
-		what := fmt.Sprintf("expected in range %s-%s", runeRep(begin), runeRep(end))
+		rbegin, rend := runeRep(begin), runeRep(end)
+		name := fmt.Sprintf("RuneRange(%s, %s)", rbegin, rend)
+		what := fmt.Sprintf("expected in range %s-%s", rbegin, rend)
 
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if r < begin || end < r {
 				return NewError(what, state.Position())
@@ -124,12 +131,13 @@ func RuneRange(begin, end rune) Parser {
 func Runes(rs []rune) Parser {
 	if n := len(rs); n > 0 {
 		reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))
+		name := fmt.Sprintf("Rune(%s)", reps)
 		what := fmt.Sprintf("expected [%s]", reps)
 		p := []byte(string(rs))
 
 		return func(state *State, result *Result) error {
 			if err := state.Request(len(p)); err != nil {
-				return err
+				return NewNestedError(name, err)
 			}
 			if !bytes.Equal(state.Buffer(), p) {
 				return NewError(what, state.Position())
