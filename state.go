@@ -5,8 +5,6 @@ import (
 	"errors"
 	"io"
 	"strings"
-
-	"github.com/ktnyt/ascii"
 )
 
 const (
@@ -23,7 +21,6 @@ type State struct {
 	req int
 	pos Position
 	stk *stack
-	ign ascii.Filter
 }
 
 // NewState creates a new state from the given io.Reader.
@@ -36,7 +33,6 @@ func NewState(r io.Reader) *State {
 		req: -1,
 		pos: Position{0, 0},
 		stk: newStack(),
-		ign: nil,
 	}
 }
 
