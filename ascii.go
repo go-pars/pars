@@ -23,6 +23,7 @@ var (
 
 // Spaces will match as many spaces as possible.
 func Spaces(state *State, result *Result) error {
+	state.Push()
 	c, err := Next(state)
 	for err == nil && ascii.IsSpace(c) {
 		state.Advance()
