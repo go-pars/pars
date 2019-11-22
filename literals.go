@@ -280,7 +280,6 @@ func Between(l, r byte) Parser {
 		if err := Skip(state, 1); err != nil {
 			return NewNestedError(name, err)
 		}
-		fmt.Printf("%T %s\n", state.rd, string(p))
 		result.SetToken(p[1:])
 		return nil
 	}
