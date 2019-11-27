@@ -22,6 +22,9 @@ func (p Parser) Map(f Map) Parser {
 	}
 }
 
+// Child will map to the i'th child of the result.
+func (p Parser) Child(i int) Parser { return p.Map(Child(i)) }
+
 // Bind will bind the given value as the parser result value.
 func (p Parser) Bind(v interface{}) Parser {
 	return func(state *State, result *Result) error {
