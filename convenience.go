@@ -3,6 +3,7 @@ package pars
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"reflect"
 	"runtime"
 	"strings"
@@ -159,17 +160,15 @@ func Until(q interface{}) Parser {
 func Line(state *State, result *Result) error {
 	state.Push()
 	c, err := Next(state)
-	for err != nil && c != '\n' {
+	for err == nil && c != '\n' {
 		state.Advance()
 		c, err = Next(state)
 	}
 	p, err := Trail(state)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		panic(err)
 	}
 	result.SetToken(p)
-	if err := Skip(state, 1); err != nil {
-		return NewNestedError("Line", err)
-	}
+	Skip(state, 1)
 	return nil
 }
