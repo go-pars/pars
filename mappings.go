@@ -8,9 +8,24 @@ import (
 func Child(i int) Map {
 	return func(result *Result) error {
 		if result.Children == nil {
-			panic("result does not have children")
+			return errNoChildren
 		}
 		*result = result.Children[i]
+		return nil
+	}
+}
+
+// Children will keep the children associated to the given indices.
+func Children(indices ...int) Map {
+	return func(result *Result) error {
+		if result.Children == nil {
+			return errNoChildren
+		}
+		children := make([]Result, len(indices))
+		for i, index := range indices {
+			children[i] = result.Children[index]
+		}
+		result.SetChildren(children)
 		return nil
 	}
 }

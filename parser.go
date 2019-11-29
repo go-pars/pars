@@ -25,6 +25,14 @@ func (p Parser) Map(f Map) Parser {
 // Child will map to the i'th child of the result.
 func (p Parser) Child(i int) Parser { return p.Map(Child(i)) }
 
+// Children will keep the children associated to the given indices.
+func (p Parser) Children(indices ...int) Parser {
+	return p.Map(Children(indices...))
+}
+
+// ToString will convert the Token field to a string Value.
+func (p Parser) ToString() Parser { return p.Map(ToString) }
+
 // Bind will bind the given value as the parser result value.
 func (p Parser) Bind(v interface{}) Parser {
 	return func(state *State, result *Result) error {

@@ -1,8 +1,11 @@
 package pars
 
 import (
+	"errors"
 	"fmt"
 )
+
+var errNoChildren = errors.New("result does not have children")
 
 // Error is a generic parser error.
 type Error struct {
