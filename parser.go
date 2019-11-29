@@ -44,6 +44,17 @@ func (p Parser) Bind(v interface{}) Parser {
 	}
 }
 
+// Error will modify the Parser to return the given error if the Parser returns
+// an error.
+func (p Parser) Error(alt error) Parser {
+	return func(state *State, result *Result) error {
+		if err := p(state, result); err != nil {
+			return alt
+		}
+		return nil
+	}
+}
+
 // Parse the given state using the parser and return the Result.
 func (p Parser) Parse(s *State) (Result, error) {
 	r := Result{}
