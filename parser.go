@@ -15,9 +15,12 @@ type Map func(result *Result) error
 // Map applies the callback if the parser matches.
 func (p Parser) Map(f Map) Parser {
 	return func(state *State, result *Result) error {
+		state.Push()
 		if err := p(state, result); err != nil {
+			state.Pop()
 			return err
 		}
+		state.Drop()
 		return f(result)
 	}
 }
