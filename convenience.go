@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/ktnyt/ascii"
+	"gopkg.in/ktnyt/ascii.v1"
 )
 
 func untilByte(e byte) Parser {

@@ -3,8 +3,8 @@ package pars_test
 import (
 	"testing"
 
-	"github.com/ktnyt/assert"
-	"github.com/ktnyt/pars"
+	"gopkg.in/ktnyt/assert.v1"
+	"gopkg.in/ktnyt/pars.v2"
 )
 
 func TestEpsilon(t *testing.T) {

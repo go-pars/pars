@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/ktnyt/ascii"
+	"gopkg.in/ktnyt/ascii.v1"
 )
 
 // Parsers for matching ASCII character patterns.

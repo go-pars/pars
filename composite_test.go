@@ -3,10 +3,10 @@ package pars_test
 import (
 	"testing"
 
-	"github.com/ktnyt/ascii"
-	"github.com/ktnyt/assert"
-	"github.com/ktnyt/bench"
-	"github.com/ktnyt/pars"
+	"gopkg.in/ktnyt/ascii.v1"
+	"gopkg.in/ktnyt/assert.v1"
+	"gopkg.in/ktnyt/bench.v1"
+	"gopkg.in/ktnyt/pars.v2"
 )
 
 func TestExact(t *testing.T) {

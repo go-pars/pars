@@ -1,7 +1,7 @@
 # Pars
 [![CircleCI](https://circleci.com/gh/ktnyt/pars.svg?style=svg)](https://circleci.com/gh/ktnyt/pars)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ktnyt/pars)](https://goreportcard.com/report/github.com/ktnyt/pars)
-[![GoDoc](http://godoc.org/github.com/ktnyt/pars?status.svg)](http://godoc.org/github.com/ktnyt/pars)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/ktnyt/pars.v2)](https://goreportcard.com/report/gopkg.in/ktnyt/pars.v2)
+[![GoDoc](http://godoc.org/gopkg.in/ktnyt/pars.v2?status.svg)](http://godoc.org/gopkg.in/ktnyt/pars.v2)
 
 Parser combinator library for Go.
 
@@ -12,7 +12,7 @@ performance so if you are looking for a similar, performant library check out
 the library that do not break the existing interface is welcome.
 
 ## Documentation
-Consult the [GoDoc](https://godoc.org/github.com/ktnyt/pars) for some detailed
+Consult the [GoDoc](https://godoc.org/gopkg.in/ktnyt/pars.v2) for some detailed
 documentation of Pars.
 
 ## Example: Polish Notation Parser
@@ -65,7 +65,7 @@ state and result to return an error. The definition above can be tranlated to
 a Pars parser as follows.
 
 ```Go
-import "github.com/ktnyt/pars"
+import "gopkg.in/ktnyt/pars.v2"
 
 var (
 	NonZero = pars.Any('1', '2', '3', '4', '5', '6', '7', '8', '9')
