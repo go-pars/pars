@@ -156,6 +156,19 @@ func Until(q interface{}) Parser {
 	}
 }
 
+// EOL matches an end of a line (a newline byte or the end of state).
+func EOL(state *State, result *Result) error {
+	c, err := Next(state)
+	if err != nil {
+		return nil
+	}
+	if c != '\n' {
+		return NewError("expected newline or end of state", state.Position())
+	}
+	state.Advance()
+	return nil
+}
+
 // Line matches up to a newline byte or the end of state.
 func Line(state *State, result *Result) error {
 	state.Push()
