@@ -69,15 +69,10 @@ func (s *State) Request(n int) error {
 		s.buf = p[:l+m]
 		if err != nil {
 			s.err = err
-		}
-
-		// Still not enough bytes.
-		if len(s.buf) < s.off+n {
-			s.req = m
-			if s.err == nil {
-				s.err = io.EOF
+			// Still not enough bytes.
+			if len(s.buf) < s.off+n {
+				return s.err
 			}
-			return s.err
 		}
 	}
 
