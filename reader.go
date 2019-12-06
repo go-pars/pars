@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"io"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 // Reader is a special io.Reader that will skip all whitespaces unless it is
@@ -23,7 +23,7 @@ func NewReader(r io.Reader) *Reader {
 // Read satisfies the io.Reader interface.
 func (r *Reader) Read(p []byte) (int, error) {
 	n := 0
-	for range p {
+	for n < len(p) {
 		c, err := r.reader.ReadByte()
 
 		if err != nil {
