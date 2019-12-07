@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"runtime"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 // Parsers for matching ASCII character patterns.
@@ -29,10 +29,7 @@ func Spaces(state *State, result *Result) error {
 		state.Advance()
 		c, err = Next(state)
 	}
-	p, err := Trail(state)
-	if err != nil {
-		return NewNestedError("Spaces", err)
-	}
+	p, _ := Trail(state)
 	result.SetToken(p)
 	return nil
 }
@@ -65,7 +62,6 @@ func Word(filter ascii.Filter) Parser {
 	v := reflect.ValueOf(filter)
 	f := runtime.FuncForPC(v.Pointer())
 	rep := f.Name()
-	name := fmt.Sprintf("Word(%s)", rep)
 	what := fmt.Sprintf("expected word of `%s`", rep)
 
 	return func(state *State, result *Result) error {
@@ -75,10 +71,7 @@ func Word(filter ascii.Filter) Parser {
 			state.Advance()
 			c, err = Next(state)
 		}
-		p, err := Trail(state)
-		if err != nil {
-			return NewNestedError(name, err)
-		}
+		p, _ := Trail(state)
 		if len(p) == 0 {
 			return NewError(what, state.Position())
 		}
