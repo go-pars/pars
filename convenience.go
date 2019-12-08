@@ -3,13 +3,12 @@ package pars
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"reflect"
 	"runtime"
 	"strings"
 	"unicode/utf8"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 func untilByte(e byte) Parser {
@@ -33,10 +32,7 @@ func untilByte(e byte) Parser {
 			}
 		}
 
-		p, err := Trail(state)
-		if err != nil {
-			return NewNestedError(name, err)
-		}
+		p, _ := Trail(state)
 		result.SetToken(p)
 		return nil
 	}
@@ -61,18 +57,12 @@ func untilBytes(e []byte) Parser {
 				}
 
 				if bytes.Equal(state.Buffer(), e) {
-					p, err := Trail(state)
-					if err != nil {
-						return NewNestedError(name, err)
-					}
+					p, _ := Trail(state)
 					result.SetToken(p)
 					return nil
 				}
 
-				if err := Skip(state, 1); err != nil {
-					state.Pop()
-					return NewNestedError(name, err)
-				}
+				Skip(state, 1)
 			}
 		}
 	}
@@ -101,10 +91,7 @@ func untilFilter(filter ascii.Filter) Parser {
 			}
 		}
 
-		p, err := Trail(state)
-		if err != nil {
-			return NewNestedError(name, err)
-		}
+		p, _ := Trail(state)
 		result.SetToken(p)
 		return nil
 	}
@@ -125,6 +112,8 @@ func Until(q interface{}) Parser {
 	case []rune:
 		p := []byte(string(v))
 		return untilBytes(p)
+	case func(byte) bool:
+		return untilFilter(v)
 	case ascii.Filter:
 		return untilFilter(v)
 	default:
@@ -177,10 +166,7 @@ func Line(state *State, result *Result) error {
 		state.Advance()
 		c, err = Next(state)
 	}
-	p, err := Trail(state)
-	if err != nil && err != io.EOF {
-		panic(err)
-	}
+	p, _ := Trail(state)
 	result.SetToken(p)
 	Skip(state, 1)
 	return nil
