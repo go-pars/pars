@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 // Byte creates a Parser which will attempt to match the next single byte.
@@ -91,22 +91,19 @@ func ByteRange(begin, end byte) Parser {
 
 // Bytes creates a Parser which will attempt to match the given sequence of bytes.
 func Bytes(p []byte) Parser {
-	if n := len(p); n > 0 {
-		reps := fmt.Sprintf("[%s]", strings.Join(ascii.Reps(p), ", "))
-		name := fmt.Sprintf("Bytes([%s])", reps)
-		what := fmt.Sprintf("expected [%s]", reps)
+	reps := fmt.Sprintf("[%s]", strings.Join(ascii.Reps(p), ", "))
+	name := fmt.Sprintf("Bytes([%s])", reps)
+	what := fmt.Sprintf("expected [%s]", reps)
 
-		return func(state *State, result *Result) error {
-			if err := state.Request(n); err != nil {
-				return NewNestedError(name, err)
-			}
-			if !bytes.Equal(state.Buffer(), p) {
-				return NewError(what, state.Position())
-			}
-			result.SetToken(p)
-			state.Advance()
-			return nil
+	return func(state *State, result *Result) error {
+		if err := state.Request(len(p)); err != nil {
+			return NewNestedError(name, err)
 		}
+		if !bytes.Equal(state.Buffer(), p) {
+			return NewError(what, state.Position())
+		}
+		result.SetToken(p)
+		state.Advance()
+		return nil
 	}
-	panic("no bytes given")
 }
