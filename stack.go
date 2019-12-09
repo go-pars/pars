@@ -14,8 +14,6 @@ type stack struct {
 
 func newStack() *stack { return &stack{make([]frame, stackGrowthSize), 0} }
 
-func (s stack) Len() int { return s.i }
-
 func (s stack) Empty() bool { return s.i == 0 }
 
 func (s *stack) Push(i int, position Position) {
@@ -27,9 +25,6 @@ func (s *stack) Push(i int, position Position) {
 }
 
 func (s *stack) Pop() (int, Position) {
-	if s.i == 0 {
-		panic("Pop called on empty stack")
-	}
 	s.i--
 	f := s.v[s.i]
 	return f.Off, f.Pos
