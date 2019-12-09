@@ -14,11 +14,9 @@ import (
 func Byte(p ...byte) Parser {
 	switch len(p) {
 	case 0:
-		name := "Byte()"
-
 		return func(state *State, result *Result) error {
 			if err := state.Request(1); err != nil {
-				return NewNestedError(name, err)
+				return NewNestedError("Byte", err)
 			}
 			result.SetToken([]byte{state.Buffer()[0]})
 			state.Advance()
