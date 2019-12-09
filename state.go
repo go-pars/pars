@@ -174,9 +174,7 @@ func Trail(state *State) ([]byte, error) {
 	off := state.Offset()
 	state.Pop()
 	n := off - state.Offset()
-	if state.Request(n) != nil {
-		panic("logical error: Request failed")
-	}
+	state.Request(n)
 	p := state.Buffer()
 	state.Advance()
 	return p, nil
