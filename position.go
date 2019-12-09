@@ -9,11 +9,9 @@ type Position struct {
 }
 
 // Head tests if the position is at the head.
-func (p Position) Head() bool {
-	return p.Line == 0 && p.Byte == 0
-}
+func (p Position) Head() bool { return p.Line == 0 && p.Byte == 0 }
 
 // String returns a formatted position.
 func (p Position) String() string {
-	return fmt.Sprintf("line %d byte %d", p.Line+1, p.Byte+1)
+	return fmt.Sprintf("line %d, byte %d", p.Line+1, p.Byte+1)
 }
