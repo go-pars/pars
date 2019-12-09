@@ -7,28 +7,14 @@ import (
 	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
-func convertInt(state *State) int {
-	p, err := Trail(state)
-	if err != nil {
-		panic(err)
-	}
-	n, err := strconv.Atoi(string(p))
-	if err != nil {
-		panic(err)
-	}
-	return n
+func convertInt(state *State) (int, error) {
+	p, _ := Trail(state)
+	return strconv.Atoi(string(p))
 }
 
-func convertNumber(state *State) float64 {
-	p, err := Trail(state)
-	if err != nil {
-		panic(err)
-	}
-	n, err := strconv.ParseFloat(string(p), 64)
-	if err != nil {
-		panic(err)
-	}
-	return n
+func convertNumber(state *State) (float64, error) {
+	p, _ := Trail(state)
+	return strconv.ParseFloat(string(p), 64)
 }
 
 // Int will match an integer string and return its numerical representation.
@@ -80,7 +66,11 @@ func Int(state *State, result *Result) error {
 		c, err = Next(state)
 	}
 
-	result.SetValue(convertInt(state))
+	n, err := convertInt(state)
+	if err != nil {
+		return err
+	}
+	result.SetValue(n)
 	return nil
 }
 
@@ -148,13 +138,21 @@ func Number(state *State, result *Result) error {
 		c, err = Next(state)
 		if err != nil {
 			state.Pop()
-			result.SetValue(convertNumber(state))
+			n, err := convertNumber(state)
+			if err != nil {
+				return err
+			}
+			result.SetValue(n)
 			return nil
 		}
 
 		if !ascii.IsDigit(c) {
 			state.Pop()
-			result.SetValue(convertNumber(state))
+			n, err := convertNumber(state)
+			if err != nil {
+				return err
+			}
+			result.SetValue(n)
 			return nil
 		}
 
@@ -180,7 +178,11 @@ func Number(state *State, result *Result) error {
 		c, err = Next(state)
 		if err != nil {
 			state.Pop()
-			result.SetValue(convertNumber(state))
+			n, err := convertNumber(state)
+			if err != nil {
+				return err
+			}
+			result.SetValue(n)
 			return nil
 		}
 
@@ -190,7 +192,11 @@ func Number(state *State, result *Result) error {
 			c, err = Next(state)
 			if err != nil {
 				state.Pop()
-				result.SetValue(convertNumber(state))
+				n, err := convertNumber(state)
+				if err != nil {
+					return err
+				}
+				result.SetValue(n)
 				return nil
 			}
 		}
@@ -198,7 +204,11 @@ func Number(state *State, result *Result) error {
 		// There are no digits so backtrack and return.
 		if !ascii.IsDigit(c) {
 			state.Pop()
-			result.SetValue(convertNumber(state))
+			n, err := convertNumber(state)
+			if err != nil {
+				return err
+			}
+			result.SetValue(n)
 			return nil
 		}
 
@@ -215,7 +225,11 @@ func Number(state *State, result *Result) error {
 		state.Drop()
 	}
 
-	result.SetValue(convertNumber(state))
+	n, err := convertNumber(state)
+	if err != nil {
+		return err
+	}
+	result.SetValue(n)
 	return nil
 }
 
@@ -259,13 +273,8 @@ func Between(l, r byte) Parser {
 			return NewError(whatR, state.Position())
 		}
 
-		p, err := Trail(state)
-		if err != nil {
-			return NewNestedError(name, err)
-		}
-		if err := Skip(state, 1); err != nil {
-			return NewNestedError(name, err)
-		}
+		p, _ := Trail(state)
+		Skip(state, 1)
 		result.SetToken(p[1:])
 		return nil
 	}
