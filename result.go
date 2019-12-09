@@ -65,5 +65,5 @@ func AsResults(args ...interface{}) *Result {
 	for i, arg := range args {
 		r[i] = *AsResult(arg)
 	}
-	return NewChildrenResult(r)
+	return AsResult(r)
 }
