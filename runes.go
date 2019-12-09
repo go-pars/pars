@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 func runeRep(r rune) string {
@@ -48,12 +48,10 @@ func readRune(state *State) (rune, error) {
 func Rune(rs ...rune) Parser {
 	switch len(rs) {
 	case 0:
-		name := "Rune"
-
 		return func(state *State, result *Result) error {
 			r, err := readRune(state)
 			if err != nil {
-				return NewNestedError(name, err)
+				return NewNestedError("Rune", err)
 			}
 			result.SetValue(r)
 			state.Advance()
@@ -129,23 +127,20 @@ func RuneRange(begin, end rune) Parser {
 
 // Runes creates a parser which will attempt to match the given sequence of runes.
 func Runes(rs []rune) Parser {
-	if n := len(rs); n > 0 {
-		reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))
-		name := fmt.Sprintf("Rune(%s)", reps)
-		what := fmt.Sprintf("expected [%s]", reps)
-		p := []byte(string(rs))
+	reps := fmt.Sprintf("[%s]", strings.Join(runeReps(rs), ", "))
+	name := fmt.Sprintf("Rune(%s)", reps)
+	what := fmt.Sprintf("expected [%s]", reps)
+	p := []byte(string(rs))
 
-		return func(state *State, result *Result) error {
-			if err := state.Request(len(p)); err != nil {
-				return NewNestedError(name, err)
-			}
-			if !bytes.Equal(state.Buffer(), p) {
-				return NewError(what, state.Position())
-			}
-			result.SetValue(rs)
-			state.Advance()
-			return nil
+	return func(state *State, result *Result) error {
+		if err := state.Request(len(p)); err != nil {
+			return NewNestedError(name, err)
 		}
+		if !bytes.Equal(state.Buffer(), p) {
+			return NewError(what, state.Position())
+		}
+		result.SetValue(rs)
+		state.Advance()
+		return nil
 	}
-	panic("no runes given")
 }
