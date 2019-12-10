@@ -671,14 +671,21 @@ func TestPanic(t *testing.T) {
 }
 
 func TestParserError(t *testing.T) {
-	e := errors.New("error")
-	parser := Byte().Error(e)
+	in := errors.New("error")
+	be := BoundError{in, Position{0, 0}}
+	if !same(be.Unwrap(), in) {
+		t.Errorf("be.Unwrap() = %v, want %v", be.Unwrap(), in)
+		return
+	}
+
+	parser := Byte().Error(in)
 
 	t.Run("match", func(t *testing.T) {
 		state := FromString(hello)
 		result, err := parser.Parse(state)
 		if err != nil {
 			t.Errorf("parser(%q): %v", hello, err)
+			return
 		}
 		compareResults(t, result, *AsResult(hello[0]))
 	})
@@ -686,8 +693,15 @@ func TestParserError(t *testing.T) {
 	t.Run("mismatch", func(t *testing.T) {
 		state := FromString("")
 		result, err := parser.Parse(state)
-		if !same(err, e) {
-			t.Errorf("parser(%q) = `%v`, want `%v`", "", err, e)
+		if !same(err, be) {
+			t.Errorf("parser(%q) = `%v`, want `%v`", "", err, be)
+			return
+		}
+		e := fmt.Sprintf("%s at %s", in, Position{0, 0})
+		fmt.Println(err)
+		if v := err.Error(); v != e {
+			t.Errorf("err.Error() = %q, want %q", v, e)
+			return
 		}
 		compareResults(t, result, Result{})
 	})
@@ -697,6 +711,7 @@ func TestParserError(t *testing.T) {
 		e := "error at line 1, byte 1"
 		if v := err.Error(); v != e {
 			t.Errorf("err.Error() = %q, want %q", v, e)
+			return
 		}
 	})
 
@@ -709,6 +724,7 @@ func TestParserError(t *testing.T) {
 		e := fmt.Sprintf("in error:\n%s", io.EOF)
 		if v := err.Error(); v != e {
 			t.Errorf("err.Error() = %q, want %q", v, e)
+			return
 		}
 	})
 }
@@ -730,12 +746,14 @@ func TestTimeMapping(t *testing.T) {
 	case time.Time:
 		if !same(out, e) {
 			t.Errorf("result.Value = %v, want %v", out, e)
+			return
 		}
 	default:
 		t.Errorf("result.Value.(type) = %T, want %T", out, e)
+		return
 	}
 
 	if _, err := parser.Parse(FromString("")); err == nil {
-  	t.Errorf("expected error")
+		t.Errorf("expected error")
 	}
 }

@@ -3,7 +3,7 @@ package pars
 import (
 	"fmt"
 
-	"gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 // Parser is the function signature of a parser.
@@ -52,7 +52,7 @@ func (p Parser) Bind(v interface{}) Parser {
 func (p Parser) Error(alt error) Parser {
 	return func(state *State, result *Result) error {
 		if err := p(state, result); err != nil {
-			return alt
+			return BoundError{alt, state.Position()}
 		}
 		return nil
 	}

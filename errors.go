@@ -37,3 +37,17 @@ func (e NestedError) Error() string {
 
 // Unwrap returns the internal error value.
 func (e NestedError) Unwrap() error { return e.err }
+
+// BoundError is an error bound to a parser.
+type BoundError struct {
+	err error
+	pos Position
+}
+
+// Error satisfies the error interface.
+func (e BoundError) Error() string {
+	return fmt.Sprintf("%s at %s", e.err, e.pos)
+}
+
+// Unwrap returns the internal error value.
+func (e BoundError) Unwrap() error { return e.err }
