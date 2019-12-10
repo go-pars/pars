@@ -2,6 +2,7 @@ package pars
 
 import (
 	"errors"
+	"time"
 )
 
 // Child will map to the i'th child of the result.
@@ -56,4 +57,16 @@ func Cat(result *Result) error {
 func ToString(result *Result) error {
 	result.SetValue(string(result.Token))
 	return nil
+}
+
+// Time will attempt to parse the result token as a time.Time object.
+func Time(layout string) Map {
+	return func(result *Result) error {
+		t, err := time.Parse(layout, string(result.Token))
+		if err != nil {
+			return err
+		}
+		result.SetValue(t)
+		return nil
+	}
 }

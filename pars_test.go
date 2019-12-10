@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	ascii "gopkg.in/ktnyt/ascii.v1"
 )
@@ -710,4 +711,31 @@ func TestParserError(t *testing.T) {
 			t.Errorf("err.Error() = %q, want %q", v, e)
 		}
 	})
+}
+
+func TestTimeMapping(t *testing.T) {
+	e := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+	layout := "Mon Jan 2 15:04:05 -0700 MST 2006"
+	in := e.Format(layout)
+
+	parser := AsParser(Line).Map(Time(layout))
+	state := FromString(in)
+	result, err := parser.Parse(state)
+
+	if err != nil {
+		t.Errorf("parser returned %v", err)
+		return
+	}
+	switch out := result.Value.(type) {
+	case time.Time:
+		if !same(out, e) {
+			t.Errorf("result.Value = %v, want %v", out, e)
+		}
+	default:
+		t.Errorf("result.Value.(type) = %T, want %T", out, e)
+	}
+
+	if _, err := parser.Parse(FromString("")); err == nil {
+  	t.Errorf("expected error")
+	}
 }
