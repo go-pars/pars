@@ -598,6 +598,16 @@ var parserTests = []struct {
 			{small, AsResult(small)},
 			{large, AsResult(large)},
 		}, nil,
+	}, {
+		"Many(Byte()).Map(Join(nil))", Many(Byte()).Map(Join(nil)),
+		[]testPair{
+			{hello, AsResult([]byte(hello))},
+			{small, AsResult([]byte(small))},
+			{large, AsResult([]byte(large))},
+		}, nil,
+	}, {
+		"Byte().Map(Join(nil))", Byte().Map(Join(nil)),
+		nil, []string{hello, small, large},
 	},
 }
 

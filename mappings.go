@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"bytes"
 	"errors"
 	"time"
 )
@@ -51,6 +52,22 @@ func Cat(result *Result) error {
 	}
 	result.SetToken(p)
 	return nil
+}
+
+// Join will join the tokens with the given separator.
+func Join(sep []byte) Map {
+	return func(result *Result) error {
+		if result.Children == nil {
+			return errNoChildren
+		}
+		ps := make([][]byte, len(result.Children))
+		for i, child := range result.Children {
+			ps[i] = child.Token
+		}
+		p := bytes.Join(ps, sep)
+		result.SetToken(p)
+		return nil
+	}
 }
 
 // ToString will convert the Token field to a string Value.
