@@ -403,6 +403,12 @@ var parserTests = []struct {
 			{hello, AsResults("Hello", ' ', "world")},
 		}, []string{"", small, large},
 	}, {
+		"Seq(Dry(Line), Line)", Seq(Dry(Line), Line), []testPair{
+			{hello, AsResults([]byte(hello), []byte(hello))},
+			{small, AsResults([]byte(small), []byte(small))},
+			{large, AsResults([]byte(large), []byte(large))},
+		}, nil,
+	}, {
 		"Any(`Small`, `Large`)", Any(`Small`, `Large`), []testPair{
 			{small, AsResult(small[:5])},
 			{large, AsResult(large[:5])},

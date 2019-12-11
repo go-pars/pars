@@ -4,6 +4,18 @@ import (
 	"fmt"
 )
 
+// Dry creates a Parser which will attempt to match the given Parser, but will
+// restore the pre-matching state even if the given Parser matches.
+func Dry(q interface{}) Parser {
+	p := AsParser(q)
+	return func(state *State, result *Result) error {
+		state.Push()
+		err := p(state, result)
+		state.Pop()
+		return err
+	}
+}
+
 // Seq creates a Parser which will attempt to match all of the given Parsers
 // in the given order. If any of the given Parsers fail to match, the state
 // will attempt to backtrack to the position before any of the given Parsers
