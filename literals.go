@@ -246,9 +246,11 @@ func Between(l, r byte) Parser {
 
 		c, err := Next(state)
 		if err != nil {
+			state.Pop()
 			return NewNestedError(name, err)
 		}
 		if c != l {
+			state.Pop()
 			return NewError(whatL, state.Position())
 		}
 
