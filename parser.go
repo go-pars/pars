@@ -2,40 +2,71 @@ package pars
 
 import (
 	"fmt"
-	"io"
+
+	ascii "gopkg.in/ktnyt/ascii.v1"
 )
 
 // Parser is the function signature of a parser.
 type Parser func(*State, *Result) error
 
+// Map is the function signature for a result mapper.
+type Map func(result *Result) error
+
 // Map applies the callback if the parser matches.
-// Use Map to convert a result into meaningful data.
 func (p Parser) Map(f Map) Parser {
 	return func(state *State, result *Result) error {
+		state.Push()
 		if err := p(state, result); err != nil {
+			state.Pop()
 			return err
 		}
+		state.Drop()
 		return f(result)
 	}
 }
 
-// Bind a specific value to a result of a parser.
+// Child will map to the i'th child of the result.
+func (p Parser) Child(i int) Parser { return p.Map(Child(i)) }
+
+// Children will keep the children associated to the given indices.
+func (p Parser) Children(indices ...int) Parser {
+	return p.Map(Children(indices...))
+}
+
+// ToString will convert the Token field to a string Value.
+func (p Parser) ToString() Parser { return p.Map(ToString) }
+
+// Bind will bind the given value as the parser result value.
 func (p Parser) Bind(v interface{}) Parser {
 	return func(state *State, result *Result) error {
 		if err := p(state, result); err != nil {
 			return err
 		}
-		result.Value = v
+		result.SetValue(v)
 		return nil
 	}
 }
 
-// ParserLike is a placeholder for types that can potentially be turned into a
-// Parser with AsParser.
-type ParserLike interface{}
+// Error will modify the Parser to return the given error if the Parser returns
+// an error.
+func (p Parser) Error(alt error) Parser {
+	return func(state *State, result *Result) error {
+		if err := p(state, result); err != nil {
+			return BoundError{alt, state.Position()}
+		}
+		return nil
+	}
+}
 
-// AsParser attempts to create a Parser from a ParserLike object.
-func AsParser(q ParserLike) Parser {
+// Parse the given state using the parser and return the Result.
+func (p Parser) Parse(s *State) (Result, error) {
+	r := Result{}
+	err := p(s, &r)
+	return r, err
+}
+
+// AsParser attempts to create a Parser for a given argument.
+func AsParser(q interface{}) Parser {
 	switch p := q.(type) {
 	case Parser:
 		return p
@@ -48,39 +79,25 @@ func AsParser(q ParserLike) Parser {
 	case byte:
 		return Byte(p)
 	case []byte:
-		return Bytes(p...)
+		return Bytes(p)
 	case rune:
 		return Rune(p)
 	case []rune:
-		return Runes(p...)
+		return Runes(p)
 	case string:
 		return String(p)
+	case ascii.Filter:
+		return Filter(p)
 	default:
-		panic(fmt.Errorf("cannot make a parser from `%T`", p))
+		panic(fmt.Errorf("cannot convert type `%T` to a parser", p))
 	}
 }
 
-// AsParsers attempts to create Parsers from the given ParserLike objects.
-func AsParsers(q ...ParserLike) []Parser {
-	p := make([]Parser, len(q))
-	for i := range q {
-		p[i] = AsParser(q[i])
+// AsParsers applies the AsParser function to each argument.
+func AsParsers(qs ...interface{}) []Parser {
+	ps := make([]Parser, len(qs))
+	for i, q := range qs {
+		ps[i] = AsParser(q)
 	}
-	return p
-}
-
-// Apply a parser to a State.
-func Apply(q ParserLike, s *State) (interface{}, error) {
-	r := Result{}
-	p := AsParser(q)
-	if err := p(s, &r); err != nil && err != io.EOF {
-		return nil, err
-	}
-	if r.Value != nil {
-		return r.Value, nil
-	}
-	if r.Children != nil {
-  	return r.Children, nil
-	}
-	return nil, nil
+	return ps
 }

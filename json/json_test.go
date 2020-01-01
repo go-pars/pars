@@ -4,95 +4,45 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ktnyt/pars"
-	"github.com/stretchr/testify/require"
+	"gopkg.in/ktnyt/assert.v1"
+	"gopkg.in/ktnyt/pars.v2"
 )
 
+func testCase(s string, e interface{}) assert.F {
+	r, err := Unmarshal(strings.NewReader(s))
+	return assert.All(assert.NoError(err), assert.Equal(r, e))
+}
+
 func TestUnmarshal(t *testing.T) {
-	t.Run("basic types", func(t *testing.T) {
-		var result interface{}
-		var err error
+	assert.Apply(t,
+		assert.C("basic types",
+			testCase(`null`, nil),
+			testCase(`true`, true),
+			testCase(`false`, false),
+			testCase(`42`, 42.0),
+			testCase(`"Hello, world!"`, "Hello, world!"),
+		),
 
-		result, err = Unmarshal(strings.NewReader(`null`))
-		require.NoError(t, err)
-		require.Equal(t, nil, result)
+		assert.C("array", testCase(
+			`[true, null, false, -1.23e+4]`,
+			[]interface{}{true, nil, false, -1.23e+4},
+		)),
 
-		result, err = Unmarshal(strings.NewReader(`true`))
-		require.NoError(t, err)
-		require.Equal(t, true, result)
-
-		result, err = Unmarshal(strings.NewReader(`false`))
-		require.NoError(t, err)
-		require.Equal(t, false, result)
-
-		result, err = Unmarshal(strings.NewReader(`"true"`))
-		require.NoError(t, err)
-		require.Equal(t, "true", result)
-	})
-
-	t.Run("array", func(t *testing.T) {
-		s := strings.NewReader(`[true, null, false, -1.23e+4]`)
-		result, err := Unmarshal(s)
-		require.NoError(t, err)
-		require.Equal(t, []interface{}{true, nil, false, -1.23e+4}, result)
-	})
-
-	t.Run("object", func(t *testing.T) {
-		s := strings.NewReader(`{"true":true, "false":false, "null": null, "number": 404} `)
-		result, err := Unmarshal(s)
-		require.NoError(t, err)
-		r := result.(map[string]interface{})
-		e := map[string]interface{}{"true": true, "false": false, "null": nil, "number": float64(404)}
-		require.Equal(t, len(e), len(r))
-		for key := range e {
-			require.Equal(t, e[key], r[key])
-		}
-	})
-
-	t.Run("complex", func(t *testing.T) {
-		s := strings.NewReader(benchmarkString)
-		result, err := Unmarshal(s)
-		require.NoError(t, err)
-		require.NotNil(t, result)
-	})
+		assert.C("object", testCase(
+			`{"true":true, "false":false, "null": null, "number": 404}`,
+			map[string]interface{}{"true": true, "false": false, "null": nil, "number": float64(404)},
+		)),
+	)
 }
 
 func BenchmarkJSON(b *testing.B) {
-	b.Run("state", func(b *testing.B) {
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s := pars.NewState(strings.NewReader(benchmarkString))
-			s.Want(1)
-		}
-	})
-
-	b.Run("array", func(b *testing.B) {
-		s := pars.NewState(strings.NewReader(`[true, null, false, -1.23e+4]`))
-		p := pars.Dry(Value)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			err := p(s, pars.VoidResult)
-			require.NoError(b, err)
-		}
-	})
-
-	b.Run("object", func(b *testing.B) {
-		s := pars.NewState(strings.NewReader(`{"true":true, "false":false, "null": null, "number": 404}`))
-		p := pars.Dry(Value)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			err := p(s, pars.VoidResult)
-			require.NoError(b, err)
-		}
-	})
-
 	b.Run("complex", func(b *testing.B) {
 		s := pars.NewState(strings.NewReader(benchmarkString))
-		p := pars.Dry(Value)
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			err := p(s, pars.VoidResult)
-			require.NoError(b, err)
+			s.Push()
+			assert.NoError(Value(s, pars.Void))(b)
+			s.Pop()
 		}
 	})
 }

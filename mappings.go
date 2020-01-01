@@ -1,145 +1,89 @@
 package pars
 
 import (
-	"strconv"
+	"bytes"
+	"errors"
 	"time"
-	"unicode/utf8"
 )
 
-// Map is a function signature for a result mapper.
-type Map func(result *Result) error
-
-// Child will attempt to set the child value for the given index as the
-// root value.
+// Child will map to the i'th child of the result.
 func Child(i int) Map {
 	return func(result *Result) error {
-		result.Value = result.Children[i].Value
-		result.Children = nil
+		if result.Children == nil {
+			return errNoChildren
+		}
+		*result = result.Children[i]
 		return nil
 	}
 }
 
-// Children will keep the children for the given indices.
-func Children(is ...int) Map {
+// Children will keep the children associated to the given indices.
+func Children(indices ...int) Map {
 	return func(result *Result) error {
-		children := make([]Result, len(is))
-		for i, j := range is {
-			children[i] = result.Children[j]
+		if result.Children == nil {
+			return errNoChildren
 		}
-		result.Children = children
+		children := make([]Result, len(indices))
+		for i, index := range indices {
+			children[i] = result.Children[index]
+		}
+		result.SetChildren(children)
 		return nil
 	}
 }
 
-// CatByte will concatenate all children values of type byte into a string.
-// This should be faster compared to the generic Cat which will check for all
-// types that can be converted to bytes and grows the result slice dynamically.
-func CatByte(result *Result) error {
-	if result.Children != nil {
-		p := make([]byte, len(result.Children))
-		for i := range result.Children {
-			p[i] = result.Children[i].Value.(byte)
-		}
-		result.Value = string(p)
-		result.Children = nil
-	}
-	return nil
-}
-
-// Cat will concatenate all children values into a string.
+// Cat will concatenate the Token fields from all of the Children.
 func Cat(result *Result) error {
-	if result.Children != nil {
-		p := make([]byte, 0, len(result.Children))
-		for i := range result.Children {
-			switch v := result.Children[i].Value.(type) {
-			case byte:
-				p = append(p, v)
-			case []byte:
-				p = append(p, v...)
-			case rune:
-				b := make([]byte, utf8.RuneLen(v))
-				utf8.EncodeRune(b, v)
-				p = append(p, b...)
-			case []rune:
-				for _, r := range v {
-					b := make([]byte, utf8.RuneLen(r))
-					utf8.EncodeRune(b, r)
-					p = append(p, b...)
-				}
-			case string:
-				p = append(p, v...)
-			default:
-			}
-		}
-		result.Value = string(p)
-		result.Children = nil
+	if len(result.Children) == 0 {
+		return errors.New("no children in Cat")
 	}
+	n := 0
+	for _, child := range result.Children {
+		if len(child.Token) == 0 {
+			return errors.New("no token in Cat")
+		}
+		n += len(child.Token)
+	}
+	p := make([]byte, n)
+	n = 0
+	for _, child := range result.Children {
+		m := copy(p[n:], child.Token)
+		n += m
+	}
+	result.SetToken(p)
 	return nil
 }
 
-func flatten(children []Result) []Result {
-	c := make([]Result, 0, len(children))
-	for _, child := range children {
-		if child.Value != nil {
-			c = append(c, child)
+// Join will join the tokens with the given separator.
+func Join(sep []byte) Map {
+	return func(result *Result) error {
+		if result.Children == nil {
+			return errNoChildren
 		}
-		if child.Children != nil {
-			c = append(c, flatten(child.Children)...)
+		ps := make([][]byte, len(result.Children))
+		for i, child := range result.Children {
+			ps[i] = child.Token
 		}
+		p := bytes.Join(ps, sep)
+		result.SetToken(p)
+		return nil
 	}
-	return c
 }
 
-// Flatten will flatten nested children into the root children slice.
-func Flatten(result *Result) error {
-	if result.Children != nil {
-		result.Children = flatten(result.Children)
-	}
+// ToString will convert the Token field to a string Value.
+func ToString(result *Result) error {
+	result.SetValue(string(result.Token))
 	return nil
 }
 
-// Time will convert the result value string to a time.
+// Time will attempt to parse the result token as a time.Time object.
 func Time(layout string) Map {
 	return func(result *Result) error {
-		t, err := time.Parse(layout, result.Value.(string))
+		t, err := time.Parse(layout, string(result.Token))
 		if err != nil {
 			return err
 		}
-		result.Value = t
-		return nil
-	}
-}
-
-// Atoi will convert the result value string to an integer.
-func Atoi(result *Result) error {
-	n, err := strconv.Atoi(result.Value.(string))
-	if err != nil {
-		return err
-	}
-	result.Value = n
-	return nil
-}
-
-// ParseInt will convert the result value string to an integer type.
-func ParseInt(base, bitSize int) Map {
-	return func(result *Result) error {
-		n, err := strconv.ParseInt(result.Value.(string), base, bitSize)
-		if err != nil {
-			return err
-		}
-		result.Value = n
-		return nil
-	}
-}
-
-// ParseFloat will convert the result value string to a float type.
-func ParseFloat(bitSize int) Map {
-	return func(result *Result) error {
-		n, err := strconv.ParseFloat(result.Value.(string), bitSize)
-		if err != nil {
-			return err
-		}
-		result.Value = n
+		result.SetValue(t)
 		return nil
 	}
 }

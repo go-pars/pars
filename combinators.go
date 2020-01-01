@@ -1,106 +1,105 @@
 package pars
 
-// Dry run the parser.
-func Dry(q ParserLike) Parser {
+import (
+	"fmt"
+)
+
+// Dry creates a Parser which will attempt to match the given Parser, but will
+// restore the pre-matching state even if the given Parser matches.
+func Dry(q interface{}) Parser {
 	p := AsParser(q)
 	return func(state *State, result *Result) error {
-		state.Mark()
-		state.Dry()
-		p(state, result)
-		state.Wet()
-		state.Jump()
-		return nil
+		state.Push()
+		err := p(state, result)
+		state.Pop()
+		return err
 	}
 }
 
-// Seq attempts to match all of the given parsers.
-func Seq(q ...ParserLike) Parser {
-	p := AsParsers(q...)
+// Seq creates a Parser which will attempt to match all of the given Parsers
+// in the given order. If any of the given Parsers fail to match, the state
+// will attempt to backtrack to the position before any of the given Parsers
+// were applied.
+func Seq(qs ...interface{}) Parser {
+	name := fmt.Sprintf("Seq(%d)", len(qs))
+	ps := AsParsers(qs...)
+
 	return func(state *State, result *Result) error {
-		state.Mark()
-		result.Children = make([]Result, len(p))
-		for i := range p {
-			if err := p[i](state, &result.Children[i]); err != nil {
-				state.Jump()
-				return NewTraceError("Seq", err)
+		v := make([]Result, len(ps))
+		state.Push()
+		for i, p := range ps {
+			if err := p(state, &v[i]); err != nil {
+				state.Pop()
+				return NewNestedError(name, err)
 			}
 		}
-		state.Unmark()
+		state.Drop()
+		result.SetChildren(v)
 		return nil
 	}
 }
 
-// Any attempts to match one of the given parsers.
-func Any(q ...ParserLike) Parser {
-	p := AsParsers(q...)
-	return func(state *State, result *Result) (lerr error) {
-		lpos := -1
-		for i := range p {
-			state.Mark()
-			if err := p[i](state, result); err != nil {
-				if state.Position > lpos {
-					lpos = state.Position
-					lerr = err
-				}
-				if !state.Jump() {
-					return NewTraceError("Any", err)
-				}
-			} else {
-				state.Unmark()
+// Any creates a Parser which will attempt to match any of the given Parsers.
+// If all of the given Parsers fail to match, the state will attempt to
+// backtrack to the position before any of the given Parsers were applied. An
+// error from the parser will be returned immediately if the state cannot be
+// backtracked. Otherwise, the error from the last Parser will be returned.
+func Any(qs ...interface{}) Parser {
+	name := fmt.Sprintf("Any(%d)", len(qs))
+	ps := AsParsers(qs...)
+
+	return func(state *State, result *Result) (err error) {
+		state.Push()
+		for _, p := range ps {
+			if err = p(state, result); err == nil {
+				state.Drop()
 				return nil
 			}
-		}
-		return NewTraceError("Any", lerr)
-	}
-}
-
-// Try to match the given parser and undo if it fails.
-func Try(q ParserLike) Parser {
-	return Any(q, Epsilon)
-}
-
-// Many attempts to match the given parser as many times as possible.
-func Many(q ParserLike, args ...int) Parser {
-	p := AsParser(q)
-	c := 5
-	min := 0
-	if len(args) > 0 {
-		min = args[0]
-	}
-	if min > c {
-		c = min
-	}
-	return func(state *State, result *Result) error {
-		result.Children = make([]Result, 0, c)
-		for {
-			state.Mark()
-			result.Children = append(result.Children, Result{})
-			if err := p(state, &result.Children[len(result.Children)-1]); err != nil {
-				state.Jump()
-				if len(result.Children) >= min {
-					result.Children = result.Children[:len(result.Children)-1]
-					return nil
-				}
-				return NewTraceError("Many", err)
-			}
-			state.Unmark()
-		}
-	}
-}
-
-// Count attempts to match the given parser a given number of times.
-func Count(q ParserLike, count int) Parser {
-	p := AsParser(q)
-	return func(state *State, result *Result) error {
-		result.Children = make([]Result, count)
-		state.Mark()
-		for i := 0; i < count; i++ {
-			if err := p(state, &result.Children[i]); err != nil {
-				state.Jump()
-				return NewTraceError("Many", err)
+			if !state.Pushed() {
+				return NewNestedError(name, err)
 			}
 		}
-		state.Unmark()
+		state.Pop()
+		return NewNestedError(name, err)
+	}
+}
+
+// Maybe creates a Parser which will attempt to match the given Parser but
+// will not return an error upon a mismatch unless the state cannot be
+// backtracked.
+func Maybe(q interface{}) Parser {
+	p := AsParser(q)
+
+	return func(state *State, result *Result) error {
+		state.Push()
+		if err := p(state, result); err != nil {
+			if !state.Pushed() {
+				return NewNestedError("Maybe", err)
+			}
+			state.Pop()
+			return nil
+		}
+		state.Drop()
+		return nil
+	}
+}
+
+// Many creates a Parser which will attempt to match the given Parser as many
+// times as possible.
+func Many(q interface{}) Parser {
+	p := AsParser(q)
+
+	return func(state *State, result *Result) error {
+		v := []Result{}
+		start := state.Position()
+		for p(state, result) == nil {
+			if start == state.Position() {
+				return nil
+			}
+			v = append(v, *result)
+			*result = Result{}
+		}
+		result.SetChildren(v)
 		return nil
 	}
 }
