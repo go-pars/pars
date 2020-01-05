@@ -56,14 +56,13 @@ func (s *State) Read(p []byte) (int, error) {
 // returns an error, Request will return the corresponding error.
 func (s *State) Request(n int) error {
 	// There are not enough bytes left in the buffer.
-	for len(s.buf) < s.off+n {
-		// The io.Reader object previously returned an error.
-		if s.err != nil {
-			return s.err
+	if len(s.buf) < s.off+n {
+		growthSize := bufferReadSize
+		// Assure growth size spans the requested byte count.
+		for len(s.buf)+growthSize < s.off+n {
+			growthSize += bufferReadSize
 		}
-
-		// Read the next block of bytes.
-		p := make([]byte, len(s.buf)+bufferReadSize)
+		p := make([]byte, len(s.buf)+growthSize)
 		l := copy(p, s.buf)
 		m, err := s.rd.Read(p[l:])
 		s.buf = p[:l+m]
