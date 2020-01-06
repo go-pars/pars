@@ -1,5 +1,5 @@
 # Pars
-[![CircleCI](https://circleci.com/gh/pars.svg?style=svg)](https://circleci.com/gh/pars)
+[![CircleCI](https://circleci.com/gh/go-pars/pars.svg?style=svg)](https://circleci.com/gh/go-pars/pars)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/pars.v2)](https://goreportcard.com/report/gopkg.in/pars.v2)
 [![GoDoc](http://godoc.org/gopkg.in/pars.v2?status.svg)](http://godoc.org/gopkg.in/pars.v2)
 
