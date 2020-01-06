@@ -1,38 +1,47 @@
 package examples
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
-	"gopkg.in/ktnyt/assert.v1"
-	"gopkg.in/ktnyt/pars.v2"
+	pars "gopkg.in/ktnyt/pars.v2"
 )
 
-func testCase(s string, e interface{}) assert.F {
-	r, err := Unmarshal(strings.NewReader(s))
-	return assert.All(assert.NoError(err), assert.Equal(r, e))
+func same(a, b interface{}) bool {
+	return reflect.DeepEqual(a, b)
+}
+
+var unmarshalTestCases = []struct {
+	in  string
+	out interface{}
+}{
+	{`null`, nil},
+	{`true`, true},
+	{`false`, false},
+	{`42`, 42.0},
+	{`"Hello, world!"`, "Hello, world!"},
+	{
+		`[true, null, false, -1.23e+4]`,
+		[]interface{}{true, nil, false, -1.23e+4},
+	},
+	{
+		`{"true":true, "false":false, "null": null, "number": 404}`,
+		map[string]interface{}{"true": true, "false": false, "null": nil, "number": float64(404)},
+	},
 }
 
 func TestUnmarshal(t *testing.T) {
-	assert.Apply(t,
-		assert.C("basic types",
-			testCase(`null`, nil),
-			testCase(`true`, true),
-			testCase(`false`, false),
-			testCase(`42`, 42.0),
-			testCase(`"Hello, world!"`, "Hello, world!"),
-		),
-
-		assert.C("array", testCase(
-			`[true, null, false, -1.23e+4]`,
-			[]interface{}{true, nil, false, -1.23e+4},
-		)),
-
-		assert.C("object", testCase(
-			`{"true":true, "false":false, "null": null, "number": 404}`,
-			map[string]interface{}{"true": true, "false": false, "null": nil, "number": float64(404)},
-		)),
-	)
+	for _, tt := range unmarshalTestCases {
+		out, err := Unmarshal(strings.NewReader(tt.in))
+		if err != nil {
+			t.Errorf("Unmarshal(%q): %v", tt.in, err)
+			return
+		}
+		if !same(out, tt.out) {
+			t.Errorf("Unmarshal(%q)= %v, wanted %v", tt.in, out, tt.out)
+		}
+	}
 }
 
 func BenchmarkJSON(b *testing.B) {
@@ -41,7 +50,7 @@ func BenchmarkJSON(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			s.Push()
-			assert.NoError(Value(s, pars.Void))(b)
+			Value(s, pars.Void)
 			s.Pop()
 		}
 	})
