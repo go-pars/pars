@@ -3,7 +3,7 @@ package examples
 import (
 	"testing"
 
-	pars "gopkg.in/ktnyt/pars.v2"
+	pars "gopkg.in/pars.v2"
 )
 
 var polishTestCases = []struct {

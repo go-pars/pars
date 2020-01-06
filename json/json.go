@@ -3,7 +3,7 @@ package examples
 import (
 	"io"
 
-	"gopkg.in/ktnyt/pars.v2"
+	"gopkg.in/pars.v2"
 )
 
 func arrayMap(result *pars.Result) error {

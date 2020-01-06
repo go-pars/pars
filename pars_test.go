@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	ascii "gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ascii.v1"
 )
 
 var (

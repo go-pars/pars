@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	ascii "gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ascii.v1"
 )
 
 func runeRep(r rune) string {

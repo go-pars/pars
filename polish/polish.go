@@ -3,7 +3,7 @@ package examples
 import (
 	"errors"
 
-	"gopkg.in/ktnyt/pars.v2"
+	"gopkg.in/pars.v2"
 )
 
 func evaluate(result *pars.Result) error {
