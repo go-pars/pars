@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"io"
 
-	ascii "gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ascii.v1"
 )
 
 // Reader is a special io.Reader that will skip all whitespaces unless it is

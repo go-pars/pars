@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	ascii "gopkg.in/ktnyt/ascii.v1"
+	ascii "gopkg.in/ascii.v1"
 )
 
 func convertInt(state *State) (int, error) {
