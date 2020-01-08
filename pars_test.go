@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -99,7 +100,7 @@ func TestState(t *testing.T) {
 
 	t.Run("Read", func(t *testing.T) {
 		p := make([]byte, len(e))
-		s := FromBytes(e)
+		s := NewState(bytes.NewBuffer(e))
 		n, err := s.Read(p)
 		if n != len(e) || err != nil {
 			t.Errorf("s.Read(p) = %d, %v, want %d, nil", n, err, len(e))
@@ -109,7 +110,7 @@ func TestState(t *testing.T) {
 	})
 
 	t.Run("Request", func(t *testing.T) {
-		s := FromBytes(e)
+		s := NewState(bytes.NewBuffer(e))
 		if err := s.Request(len(e)); err != nil {
 			t.Errorf("s.Request(%d): %v", len(e), err)
 			return
@@ -128,7 +129,7 @@ func TestState(t *testing.T) {
 	})
 
 	t.Run("Advance", func(t *testing.T) {
-		s := FromBytes(e)
+		s := NewState(bytes.NewBuffer(e))
 
 		if err := s.Request(5); err != nil {
 			t.Errorf("s.Request(5): %v", err)
@@ -156,7 +157,7 @@ func TestState(t *testing.T) {
 	})
 
 	t.Run("Stack", func(t *testing.T) {
-		s := FromBytes(e)
+		s := NewState(bytes.NewBuffer(e))
 
 		for i := 0; i < stackGrowthSize; i++ {
 			s.Push()
