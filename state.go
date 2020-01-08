@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"strings"
 )
 
 const (
@@ -36,11 +35,23 @@ func NewState(r io.Reader) *State {
 	}
 }
 
-// FromString creates a new state from the given string.
-func FromString(s string) *State { return NewState(strings.NewReader(s)) }
-
 // FromBytes creates a new state from the given bytes.
-func FromBytes(p []byte) *State { return NewState(bytes.NewBuffer(p)) }
+func FromBytes(p []byte) *State {
+	return &State{
+		rd:  &bytes.Buffer{},
+		buf: p,
+		off: 0,
+		err: nil,
+		req: -1,
+		pos: Position{0, 0},
+		stk: newStack(),
+	}
+}
+
+// FromString creates a new state from the given string.
+func FromString(s string) *State {
+	return FromBytes([]byte(s))
+}
 
 // Read satisfies the io.Reader interface.
 func (s *State) Read(p []byte) (int, error) {
