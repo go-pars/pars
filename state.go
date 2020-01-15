@@ -62,6 +62,7 @@ func FromString(s string) *State {
 func (s *State) Read(p []byte) (int, error) {
 	err := s.Request(len(p))
 	n := copy(p, s.buf)
+	s.Request(n)
 	s.Advance()
 	return n, err
 }
