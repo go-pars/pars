@@ -60,12 +60,10 @@ func FromString(s string) *State {
 
 // Read satisfies the io.Reader interface.
 func (s *State) Read(p []byte) (int, error) {
-	if err := s.Request(len(p)); err != nil {
-		return 0, err
-	}
+	err := s.Request(len(p))
 	n := copy(p, s.buf)
 	s.Advance()
-	return n, nil
+	return n, err
 }
 
 // Request checks if the state contains at least the given number of bytes,

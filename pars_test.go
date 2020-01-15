@@ -107,11 +107,6 @@ func TestState(t *testing.T) {
 			return
 		}
 		compareBytes(t, p, e)
-		n, err = s.Read(p)
-		if n != 0 || err == nil {
-			t.Errorf("s.Read(p) = %d, nil want 0, error", n)
-			return
-		}
 	})
 
 	t.Run("State from State", func(t *testing.T) {
