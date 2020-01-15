@@ -24,14 +24,19 @@ type State struct {
 
 // NewState creates a new state from the given io.Reader.
 func NewState(r io.Reader) *State {
-	return &State{
-		rd:  r,
-		buf: make([]byte, 0),
-		off: 0,
-		err: nil,
-		req: -1,
-		pos: Position{0, 0},
-		stk: newStack(),
+	switch rd := r.(type) {
+	case *State:
+		return rd
+	default:
+		return &State{
+			rd:  r,
+			buf: make([]byte, 0),
+			off: 0,
+			err: nil,
+			req: -1,
+			pos: Position{0, 0},
+			stk: newStack(),
+		}
 	}
 }
 
