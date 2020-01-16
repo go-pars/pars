@@ -36,6 +36,10 @@ func compareBytes(t *testing.T, v, e []byte) bool {
 		if v[i] != e[i] {
 			t.Errorf("v[%d] = 0x%x, want 0x%x", i, v[i], e[i])
 			ok = false
+			if i > 9 {
+				t.Errorf("too many mismatches")
+				return ok
+			}
 		}
 	}
 	return ok
@@ -107,6 +111,35 @@ func TestState(t *testing.T) {
 			return
 		}
 		compareBytes(t, p, e)
+	})
+
+	t.Run("Read Long", func(t *testing.T) {
+		p := make([]byte, len(e)+1)
+		s := NewState(bytes.NewBuffer(e))
+		n, err := s.Read(p)
+		if n != len(e) || err != nil {
+			t.Errorf("s.Read(p) = %d, %v, want %d, error", n, err, len(e))
+			return
+		}
+		compareBytes(t, p[:n], e)
+	})
+
+	t.Run("Read Short Pushed", func(t *testing.T) {
+		m := 512
+		s := NewState(bytes.NewBuffer(e))
+		s.Push()
+		for i := 0; i+m < len(e); i += m {
+			p := make([]byte, m)
+			n, err := s.Read(p)
+			if n != m || err != nil {
+				t.Errorf("s.Read(p) = %d, %v, want %d, error", n, err, m)
+				return
+			}
+			if !compareBytes(t, p, e[i:i+m]) {
+				t.Errorf("mismatch at byte %d", i)
+				return
+			}
+		}
 	})
 
 	t.Run("State from State", func(t *testing.T) {

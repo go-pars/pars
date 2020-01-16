@@ -16,8 +16,8 @@ type State struct {
 	rd  io.Reader
 	buf []byte
 	off int
+	end int
 	err error
-	req int
 	pos Position
 	stk *stack
 }
@@ -32,8 +32,8 @@ func NewState(r io.Reader) *State {
 			rd:  r,
 			buf: make([]byte, 0),
 			off: 0,
+			end: -1,
 			err: nil,
-			req: -1,
 			pos: Position{0, 0},
 			stk: newStack(),
 		}
@@ -46,8 +46,8 @@ func FromBytes(p []byte) *State {
 		rd:  &bytes.Buffer{},
 		buf: p,
 		off: 0,
+		end: -1,
 		err: nil,
-		req: -1,
 		pos: Position{0, 0},
 		stk: newStack(),
 	}
@@ -61,8 +61,7 @@ func FromString(s string) *State {
 // Read satisfies the io.Reader interface.
 func (s *State) Read(p []byte) (int, error) {
 	err := s.Request(len(p))
-	n := copy(p, s.buf)
-	s.Request(n)
+	n := copy(p, s.Buffer())
 	s.Advance()
 	return n, err
 }
@@ -70,38 +69,37 @@ func (s *State) Read(p []byte) (int, error) {
 // Request checks if the state contains at least the given number of bytes,
 // additionally reading from the io.Reader object as necessary when the
 // internal buffer is exhausted. If the call to Read for the io.Reader object
-// returns an error, Request will return the corresponding error.
+// returns an error, Request will return the corresponding error. A subsequent
+// call to Advance will advance the state offset as far as possible.
 func (s *State) Request(n int) error {
-	// There are not enough bytes left in the buffer.
 	if len(s.buf) < s.off+n {
-		growthSize := bufferReadSize
-		// Assure growth size spans the requested byte count.
-		for len(s.buf)+growthSize < s.off+n {
-			growthSize += bufferReadSize
+		readSize := bufferReadSize
+		for len(s.buf)+readSize < s.off+n {
+			readSize += bufferReadSize
 		}
-		p := make([]byte, len(s.buf)+growthSize)
-		l := copy(p, s.buf)
-		m, err := s.rd.Read(p[l:])
-		s.buf = p[:l+m]
-		if err != nil {
-			s.err = err
-			// Still not enough bytes.
-			if len(s.buf) < s.off+n {
-				return s.err
-			}
-		}
+		buf := make([]byte, len(s.buf)+readSize)
+		var i, j int
+		i = copy(buf, s.buf)
+		j, s.err = s.rd.Read(buf[i:])
+		s.buf = buf[:i+j]
 	}
 
-	s.req = n
-	return nil
+	switch {
+	case len(s.buf) < s.off+n:
+		s.end = len(s.buf)
+		return s.err
+	default:
+		s.end = s.off + n
+		return nil
+	}
 }
 
 // Advance the state by the amount given in a previous Request call.
 func (s *State) Advance() {
-	if s.req == -1 {
+	if s.end < 0 {
 		panic("no previous call to Request")
 	}
-	for _, b := range s.buf[s.off : s.off+s.req] {
+	for _, b := range s.buf[s.off:s.end] {
 		if b == '\n' {
 			s.pos.Line++
 			s.pos.Byte = 0
@@ -109,13 +107,12 @@ func (s *State) Advance() {
 			s.pos.Byte++
 		}
 	}
-	s.off += s.req
-	s.req = -1
+	s.off, s.end = s.end, -1
 	s.autoclear()
 }
 
 // Buffer returns the range of bytes guaranteed by a Request call.
-func (s State) Buffer() []byte { return s.buf[s.off : s.off+s.req] }
+func (s State) Buffer() []byte { return s.buf[s.off:s.end] }
 
 // Dump returns the entire remaining buffer content. Note that the returned
 // byte slice will not always contain the entirety of the bytes that can be
