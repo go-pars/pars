@@ -66,6 +66,16 @@ func (s *State) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// ReadByte satisfies the io.ByteReader interace.
+func (s *State) ReadByte() (byte, error) {
+	if err := s.Request(1); err != nil {
+		return 0, err
+	}
+	c := s.buf[s.off]
+	s.Advance()
+	return c, nil
+}
+
 // Request checks if the state contains at least the given number of bytes,
 // additionally reading from the io.Reader object as necessary when the
 // internal buffer is exhausted. If the call to Read for the io.Reader object

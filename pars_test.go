@@ -113,6 +113,22 @@ func TestState(t *testing.T) {
 		compareBytes(t, p, e)
 	})
 
+	t.Run("ReadByte", func(t *testing.T) {
+		s := NewState(bytes.NewBuffer(e))
+		for i := 0; i < len(e); i++ {
+			c, err := s.ReadByte()
+			if c != e[i] || err != nil {
+				t.Errorf("s.ReadByte(p) = 0x%x, %v, want 0x%x, nil", c, err, e[i])
+				return
+			}
+		}
+		c, err := s.ReadByte()
+		if c != 0 || err == nil {
+			t.Errorf("s.ReadByte(p) = 0x%x, %v, want 0x00, error", c, err)
+			return
+		}
+	})
+
 	t.Run("Read Long", func(t *testing.T) {
 		p := make([]byte, len(e)+1)
 		s := NewState(bytes.NewBuffer(e))
