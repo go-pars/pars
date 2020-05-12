@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 func runeRep(r rune) string {

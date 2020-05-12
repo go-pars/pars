@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"runtime"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 // Parsers for matching ASCII character patterns.
