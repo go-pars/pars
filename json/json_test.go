@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	pars "gopkg.in/pars.v2"
+	"github.com/go-pars/pars"
 )
 
 func same(a, b interface{}) bool {

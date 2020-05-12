@@ -3,7 +3,7 @@ package examples
 import (
 	"testing"
 
-	pars "gopkg.in/pars.v2"
+	"github.com/go-pars/pars"
 )
 
 var polishTestCases = []struct {
