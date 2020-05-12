@@ -3,7 +3,7 @@ package examples
 import (
 	"io"
 
-	"gopkg.in/pars.v2"
+	"github.com/go-pars/pars"
 )
 
 func arrayMap(result *pars.Result) error {
