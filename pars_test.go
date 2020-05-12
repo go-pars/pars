@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 var (
@@ -775,7 +775,6 @@ func TestParserError(t *testing.T) {
 			return
 		}
 		e := fmt.Sprintf("%s at %s", in, Position{0, 0})
-		fmt.Println(err)
 		if v := err.Error(); v != e {
 			t.Errorf("err.Error() = %q, want %q", v, e)
 			return

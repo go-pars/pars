@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 func convertInt(state *State) (int, error) {

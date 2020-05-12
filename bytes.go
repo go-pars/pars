@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 // Byte creates a Parser which will attempt to match the next single byte.

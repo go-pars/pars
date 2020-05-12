@@ -3,7 +3,7 @@ package pars
 import (
 	"fmt"
 
-	ascii "gopkg.in/ascii.v1"
+	"github.com/go-ascii/ascii"
 )
 
 // Parser is the function signature of a parser.
