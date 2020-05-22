@@ -1,5 +1,6 @@
 package pars
 
+// Void is a global Result for storing unused parsing results.
 var Void = &Result{}
 
 // Result is the output of a parser.
