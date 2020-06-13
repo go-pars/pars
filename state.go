@@ -82,16 +82,11 @@ func (s *State) ReadByte() (byte, error) {
 // returns an error, Request will return the corresponding error. A subsequent
 // call to Advance will advance the state offset as far as possible.
 func (s *State) Request(n int) error {
-	if len(s.buf) < s.off+n {
-		readSize := bufferReadSize
-		for len(s.buf)+readSize < s.off+n {
-			readSize += bufferReadSize
-		}
-		buf := make([]byte, len(s.buf)+readSize)
-		var i, j int
-		i = copy(buf, s.buf)
-		j, s.err = s.rd.Read(buf[i:])
-		s.buf = buf[:i+j]
+	for len(s.buf) < s.off+n && s.err == nil {
+		p := make([]byte, bufferReadSize)
+		var m int
+		m, s.err = s.rd.Read(p)
+		s.buf = append(s.buf, p[:m]...)
 	}
 
 	switch {

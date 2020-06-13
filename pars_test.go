@@ -133,8 +133,8 @@ func TestState(t *testing.T) {
 		p := make([]byte, len(e)+1)
 		s := NewState(bytes.NewBuffer(e))
 		n, err := s.Read(p)
-		if n != len(e) || err != nil {
-			t.Errorf("s.Read(p) = %d, %v, want %d, error", n, err, len(e))
+		if n != len(e) || err != io.EOF {
+			t.Errorf("s.Read(p) = %d, %v, want %d, io.EOF", n, err, len(e))
 			return
 		}
 		compareBytes(t, p[:n], e)
