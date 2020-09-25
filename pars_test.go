@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -504,9 +503,10 @@ var parserTests = []struct {
 	// literals
 	{
 		"Int", Int, []testPair{
-			{strconv.Itoa(0), AsResult(0)},
-			{strconv.Itoa(42), AsResult(42)},
-			{strconv.Itoa(-42), AsResult(-42)},
+			{"0", AsResult(0)},
+			{"42", AsResult(42)},
+			{"+42", AsResult(42)},
+			{"-42", AsResult(-42)},
 		}, []string{
 			"",
 			hello,
@@ -518,6 +518,8 @@ var parserTests = []struct {
 		"Number", Number, []testPair{
 			{"0", AsResult(0.0)},
 			{"1", AsResult(1.0)},
+			{"-1", AsResult(-1.0)},
+			{"+1", AsResult(1.0)},
 			{"10", AsResult(10.0)},
 			{"0.", AsResult(0.0)},
 			{"0.a", AsResult(0.0)},

@@ -23,7 +23,7 @@ func convertNumber(state *State) (float64, error) {
 //   zero     = `0`
 //   non-zero = `1` | `2` | `3` | `4` | `5` | `6` | `7` | `8` | `9`
 //   digit    = zero | non-zero
-//   integer  = [-], zero | digit, { digit }
+//   integer  = [ ( `-` | `+` ) ], zero | digit, { digit }
 //
 // This implementation is optimized so the parser will first scan as far as
 // possible to match a valid integer and then retrieve a block of bytes and
@@ -37,8 +37,8 @@ func Int(state *State, result *Result) error {
 		return NewNestedError("Int", err)
 	}
 
-	// Test the first byte for a possible negative sign.
-	if c == '-' {
+	// Test the first byte for a possible sign.
+	if c == '-' || c == '+' {
 		state.Advance()
 		c, err = Next(state)
 		if err != nil {
@@ -80,10 +80,10 @@ func Int(state *State, result *Result) error {
 //   zero     = `0`
 //   non-zero = `1` | `2` | `3` | `4` | `5` | `6` | `7` | `8` | `9`
 //   digit    = zero | non-zero
-//   integer  = [ `-` ], zero | digit, { digit }
+//   integer  = [ ( `-` | `+` ) ], zero | digit, { digit }
 //   fraction = `.`, digit, { digit }
 //   exponent = ( `e` | `E` ), [ ( `-` | `+` ) ], integer
-//   number   = [ `-` ],  integer, [ fraction ], [ exponent ]
+//   number   = [ ( `-` | `+` ) ],  integer, [ fraction ], [ exponent ]
 //
 // This implementation is optimized so the parser will first scan as far as
 // possible to match a valid number and then retrieve a block of bytes and
@@ -97,8 +97,8 @@ func Number(state *State, result *Result) error {
 		return NewNestedError("Number", err)
 	}
 
-	// Test the first byte for a possible negative sign.
-	if c == '-' {
+	// Test the first byte for a possible sign.
+	if c == '-' || c == '+' {
 		state.Advance()
 		c, err = Next(state)
 		if err != nil {
