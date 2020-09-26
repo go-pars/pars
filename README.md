@@ -152,7 +152,7 @@ notation. So how do we actually perform the calculation?
 
 First we need to understand what these parsers yield. A parser has the type of
 `func(*pars.State, *pars.Result) error` and the `pars.Result` struct will have
-either the `Tokoen`, `Value` or `Children` field set as a result of executing
+either the `Token`, `Value` or `Children` field set as a result of executing
 the parser. The `pars.Byte` parser will set the `Token` field to the matching
 byte, the `pars.Seq` parser will set the `Children` field to a `pars.Result`s
 list where the elements correspond to each of the parsers that it matched, and
