@@ -627,6 +627,7 @@ var parserTests = []struct {
 			{"", &Result{}},
 			{"\r" + hello, &Result{}},
 			{"\n" + hello, &Result{}},
+			{"\r\n" + hello, &Result{}},
 		}, []string{hello, small, large},
 	}, {
 		"Line", Line, []testPair{
