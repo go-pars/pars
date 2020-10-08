@@ -625,14 +625,16 @@ var parserTests = []struct {
 	}, {
 		"EOL", EOL, []testPair{
 			{"", &Result{}},
-			{"\r" + hello, &Result{}},
-			{"\n" + hello, &Result{}},
-			{"\r\n" + hello, &Result{}},
+			{"\r" + hello, AsResult([]byte("\r"))},
+			{"\n" + hello, AsResult([]byte("\n"))},
+			{"\r\n" + hello, AsResult([]byte("\r\n"))},
 		}, []string{hello, small, large},
 	}, {
 		"Line", Line, []testPair{
 			{hello, AsResult([]byte(hello))},
 			{small + "\n" + large, AsResult([]byte(small))},
+			{small + "\r" + large, AsResult([]byte(small))},
+			{small + "\r\n" + large, AsResult([]byte(small))},
 		}, nil,
 	},
 

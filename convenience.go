@@ -145,7 +145,11 @@ func Until(q interface{}) Parser {
 	}
 }
 
-// EOL matches the end of a line.
+// EOL matches the end of a line. The end of a line is one of the following:
+//   a carriage return (CR, '\r')
+//   a line feed (LF, '\n')
+//   a carriage return + line feed (CRLF, "\r\n")
+//   end of state
 func EOL(state *State, result *Result) error {
 	c, err := Next(state)
 	if err != nil {
@@ -175,15 +179,4 @@ func EOL(state *State, result *Result) error {
 }
 
 // Line matches up to a newline byte or the end of state.
-func Line(state *State, result *Result) error {
-	state.Push()
-	c, err := Next(state)
-	for err == nil && c != '\n' {
-		state.Advance()
-		c, err = Next(state)
-	}
-	p, _ := Trail(state)
-	result.SetToken(p)
-	Skip(state, 1)
-	return nil
-}
+var Line = Seq(Until(EOL), EOL).Child(0)
