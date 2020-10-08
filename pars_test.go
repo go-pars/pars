@@ -625,6 +625,7 @@ var parserTests = []struct {
 	}, {
 		"EOL", EOL, []testPair{
 			{"", &Result{}},
+			{"\r" + hello, &Result{}},
 			{"\n" + hello, &Result{}},
 		}, []string{hello, small, large},
 	}, {
