@@ -491,7 +491,7 @@ var parserTests = []struct {
 			{hello, AsResult([]byte(hello)[:5])},
 			{small, AsResult([]byte(small)[:5])},
 			{large, AsResult([]byte(large)[:5])},
-		}, []string{""},
+		}, []string{},
 	}, {
 		"Many(Epsilon)", Many(Epsilon), []testPair{
 			{hello, &Result{}},
@@ -658,12 +658,11 @@ var parserTests = []struct {
 		"Byte().Children(0)", Byte().Children(0), nil, []string{hello, small, large},
 	}, {
 		"Many(Byte()).Map(Cat)", Many(Byte()).Map(Cat), []testPair{
+			{"", AsResult([]byte{})},
 			{hello, AsResult([]byte(hello))},
 			{small, AsResult([]byte(small))},
 			{large, AsResult([]byte(large))},
 		}, nil,
-	}, {
-		"Many(Rune()).Map(Cat)", Many(Rune()).Map(Cat), nil, []string{hello, small, large},
 	}, {
 		"Many(Byte()).Map(Cat).ToString()", Many(Byte()).Map(Cat).ToString(),
 		[]testPair{

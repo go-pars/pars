@@ -2,7 +2,6 @@ package pars
 
 import (
 	"bytes"
-	"errors"
 	"time"
 )
 
@@ -35,20 +34,22 @@ func Children(indices ...int) Map {
 // Cat will concatenate the Token fields from all of the Children.
 func Cat(result *Result) error {
 	if len(result.Children) == 0 {
-		return errors.New("no children in Cat")
+		result.SetToken([]byte{})
+		return nil
 	}
 	n := 0
 	for _, child := range result.Children {
-		if len(child.Token) == 0 {
-			return errors.New("no token in Cat")
+		if len(child.Token) > 0 {
+			n += len(child.Token)
 		}
-		n += len(child.Token)
 	}
 	p := make([]byte, n)
 	n = 0
 	for _, child := range result.Children {
-		m := copy(p[n:], child.Token)
-		n += m
+		if len(child.Token) > 0 {
+			m := copy(p[n:], child.Token)
+			n += m
+		}
 	}
 	result.SetToken(p)
 	return nil
