@@ -7,7 +7,7 @@ import (
 )
 
 // Parser is the function signature of a parser.
-type Parser func(*State, *Result) error
+type Parser func(state *State, result *Result) error
 
 // Map is the function signature for a result mapper.
 type Map func(result *Result) error
