@@ -178,5 +178,32 @@ func EOL(state *State, result *Result) error {
 	return NewError("expected CR, LF, CRLF, or end of state", state.Position())
 }
 
+func calculateLineLength(state *State) (int, int) {
+	i, n, cr := 0, 0, false
+	for state.Request(i+1) == nil {
+		c := state.Buffer()[i]
+		switch {
+		case c == '\n' && cr:
+			return i - 1, n + 1
+		case c == '\n':
+			return i, n + 1
+		case c == '\r':
+			cr = true
+			n++
+		case cr:
+			return i - 1, n
+		}
+		i++
+	}
+	return i, n
+}
+
 // Line matches up to a newline byte or the end of state.
-var Line = Seq(Until(EOL), EOL).Child(0)
+func Line(state *State, result *Result) error {
+	i, n := calculateLineLength(state)
+	state.Request(i)
+	result.SetToken(state.Buffer())
+	state.Advance()
+	Skip(state, n)
+	return nil
+}
